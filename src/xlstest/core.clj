@@ -4,25 +4,17 @@
   (:require [hiccup.core :as h])
   (:require [hiccup.page :as p])
   (:require [garden.core])
-  (:require [garden.stylesheet]))
+  (:require [garden.stylesheet]
+            [xlstest.balance :as bal]
+            [xlstest.util :as u]))
 
 
-;; Random notes and snippets for pulling individual members orders from the spreadsheet
-
-
-;;This was obtained from Stackoverflow
-(defn to-col [num]
-  (loop [n num s ()]
-    (if (> n 25)
-      (let [r (mod n 26)]
-        (recur (dec (/ (- n r) 26)) (cons (char (+ 65 r)) s)))
-      (keyword (apply str (cons (char (+ 65 n)) s))))))
 
 ;; this produces the map of columns for a given member
 (defn member-cols
   "Produce the map of columns for a given member"
   [index]
- (zipmap  (vec  (map to-col (range index (+ 2 index)))) [:memdes :memcost] ))
+ (zipmap  (vec  (map u/to-col (range index (+ 2 index)))) [:memdes :memcost] ))
 
 ;; it can then be merge'd with the common-cols
 
@@ -44,11 +36,6 @@
         whole-order (select-columns order-cols sheet)
         member-order (filter #(gt-zero (:memdes %))  whole-order)]
     (assoc {} name member-order)))
-
-(defn tocurrency
-  "Format a number for currency display (2 digits. Parentheses when negative)"
-  [v]
-  (format "%.2f" (double v)))
 
 ;; start of html and css-realted functions
 (def dark-blue "#A4D1FE")
@@ -77,14 +64,23 @@
     [:.rightjust {:text-align "right"}]
     )))
 
-
+(defn emit-balance-html
+  [key balance]
+  (let [[n v] (bal/bal-item key balance)]
+    [:tr
+     [:td {:colspan 7} " "]
+     [:td {:colspan 2} n]
+     [:td.rightjust (u/tocurrency v)]
+     ]))
 
 (defn statement-head [member-name]
   [:head
    [:title (str "Statement for " (member-display-name member-name))]
    [:style {:type "text/css"} (gen-statement-css)]])
 
-(defn statement-body [member-name member-order order-date order-total]
+(def bal-keys [:bf :ordertotal :joinfee :levy :owed :moneyin :balance :cooptomember :membertocoop :cf])
+
+(defn statement-body [member-name member-order balance order-date order-total]
   [:body
    [:h1 "Albany Coop"]
    [:h2 (str "Statement for " (member-display-name member-name) " - " order-date)]
@@ -108,20 +104,22 @@
                      [:td (:code line)]
                      [:td (:description line)]
                      [:td (:case-size line)]
-                     [:td.rightjust (tocurrency (:unit-cost line))]
-                     [:td.rightjust (tocurrency (:vat-amount line))]
-                     [:td.rightjust (tocurrency (+ (:unit-cost line) (:vat-amount line)))]
+                     [:td.rightjust (u/tocurrency (:unit-cost line))]
+                     [:td.rightjust (u/tocurrency (:vat-amount line))]
+                     [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
                      [:td.rightjust (:albany-units line)]
                      [:td.rightjust (:memdes line)]
                      [:td (:del? line)]
-                     [:td.rightjust (tocurrency (:memcost line))]
+                     [:td.rightjust (u/tocurrency (:memcost line))]
                      ]
                     ))
     [:tbody
      [:tr
        [:td {:colspan 9} (str "Total for " order-date)]
-       [:td.rightjust (tocurrency order-total)]
-       ]]
+       [:td.rightjust (u/tocurrency order-total)]
+      ]
+     (map #(emit-balance-html % balance) bal-keys)
+     ]
     ]])
 
 
@@ -178,16 +176,16 @@
              [:td (:code line)]
              [:td (:description line)]
              [:td (:case-size line)]
-             [:td.rightjust (tocurrency (:unit-cost line))]
+             [:td.rightjust (u/tocurrency (:unit-cost line))]
              [:td.rightjust (:memdes line)]
              [:td " "]
-             [:td.rightjust (tocurrency (:memcost line))]
+             [:td.rightjust (u/tocurrency (:memcost line))]
              [:td " "]]
             ))
     [:tbody
      [:tr
       [:td.rightjust {:colspan 6} "Estimated Sub-total for above items "]
-      [:td.rightjust (tocurrency order-total)]
+      [:td.rightjust (u/tocurrency order-total)]
       [:td " "]
       ]]
 
@@ -197,14 +195,15 @@
     ]
    ])
 
-(defn emit-statement-html [member-name all-orders order-date]
+(defn emit-statement-html [member-name all-orders mem-balance order-date]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         file-name (str (member-display-name member-name) "-" order-date ".html")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
+    (println "mem-bal " mem-balance)
     (spit  file-name
            (p/html5 (statement-head member-name)
-                    (statement-body member-name member-order order-date order-total)))))
+                    (statement-body member-name member-order mem-balance order-date order-total)))))
 
 (defn emit-order-html [member-name all-orders order-date coordinator]
   (let [member-order (member-name all-orders)
@@ -221,10 +220,15 @@
   "Do the work of statement generation."
   (let [wb (load-workbook spreadsheet-name)
         order-sheet (select-sheet "Collated Order" wb)
+        balance-sheet (bal/get-balance-sheet wb)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
-    (doall (map #(emit-statement-html % all-orders order-date) (keys member-data)))
+    (doall (map #(emit-statement-html %
+                                      all-orders
+                                      (bal/get-member-balance % balance-sheet)
+                                      order-date)
+                (keys member-data)))
     ))
 
 (defn generate-orderforms [spreadsheet-name order-date coordinator]
@@ -237,8 +241,7 @@
     (doall (map #(emit-order-html % all-orders order-date coordinator) (keys member-data)))
     ))
 
-(defn- usage []
-  println "Usage:  -s[tatements] | -o[rder-forms] spreadsheet-name order-date coordinator")
+(def usage "Usage:  -s[tatements] | -o[rder-forms] spreadsheet-name order-date coordinator")
 
 (defn -main
   "Generate all statements from a given Albany spreadsheet."
@@ -251,10 +254,10 @@
     (cond (>= (count args) 2)
           (do (println "writing statement files for " (second args))
               (apply generate-statements args))
-          :else (usage))
+          :else (println usage))
     "-o"
     (cond (>= (count args) 3)
           (do (println "writing order forms for " (second args))
               (apply generate-orderforms args))
-          :else (usage))
-    (usage)))
+          :else (println usage))
+    (println usage)))

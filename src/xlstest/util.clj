@@ -18,3 +18,8 @@
   "Format a number for currency display (2 digits. Parentheses when negative)"
   [v]
   (format "%.2f" (double v)))
+
+(defn member-cols
+  "Produce the map of columns for a given member"
+  [index keys]
+ (zipmap  (vec  (map to-col (range index (+ (count keys) index)))) keys ))
