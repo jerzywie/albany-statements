@@ -40,6 +40,7 @@
 ;; start of html and css-realted functions
 (def dark-blue "#A4D1FE")
 (def light-blue "#EAF4FF")
+(def light-grey "#ECECEA")
 
 (defn- fix-css-fn [s]
   "An ugly hack to get round Garden's lack of complete CSS3 function support."
@@ -53,14 +54,18 @@
      {:font-size "12px"}
      {:font-weight "normal"}
      ]
-    [:.order {:width "100%"} {:border-collapse "collapse"}
+    [:.order :.balance {:border-collapse "collapse"}
      [:td :th {:border "#999 1px solid"} ]
      [:td {:padding "4px"} ]
      [:th {:background  dark-blue} {:padding "8px"}]
      [:tr
-      [:&:nth-child<even> {:background dark-blue}]
+      [:&:nth-child<even> {:background light-grey}]
       [:&:nth-child<odd> {:background light-blue}]]
      ]
+    [:table.order {:width "100%"}]
+    [:table.balance {:width "25%"}]
+    [:div.order :div.balance {:width "100%"}]
+    [:div.balance {:float "right"}]
     [:.rightjust {:text-align "right"}]
     )))
 
@@ -68,8 +73,7 @@
   [key balance]
   (let [[n v] (bal/bal-item key balance)]
     [:tr
-     [:td {:colspan 7} " "]
-     [:td {:colspan 2} n]
+     [:td n]
      [:td.rightjust (u/tocurrency v)]
      ]))
 
@@ -84,41 +88,53 @@
   [:body
    [:h1 "Albany Coop"]
    [:h2 (str "Statement for " (member-display-name member-name) " - " order-date)]
-   [:table.order
-    [:thead
-     [:tr
-      [:th "Code"]
-      [:th "Description"]
-      [:th "Packsize"]
-      [:th "Case Net"]
-      [:th "VAT"]
-      [:th "Case Gross"]
-      [:th "Albany units/case"]
-      [:th "Albany units purchased"]
-      [:th "Del?"]
-      [:th "Price charged"]
-      ]]
+   [:div.order
+    [:table.order
+     [:thead
+      [:tr
+       [:th "Code"]
+       [:th "Description"]
+       [:th "Packsize"]
+       [:th "Case Net"]
+       [:th "VAT"]
+       [:th "Case Gross"]
+       [:th "Albany units/case"]
+       [:th "Albany units purchased"]
+       [:th "Del?"]
+       [:th "Price charged"]
+       ]]
      (into [:tbody]
-            (for [line member-order]
-                    [:tr
-                     [:td (:code line)]
-                     [:td (:description line)]
-                     [:td (:case-size line)]
-                     [:td.rightjust (u/tocurrency (:unit-cost line))]
-                     [:td.rightjust (u/tocurrency (:vat-amount line))]
-                     [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
-                     [:td.rightjust (:albany-units line)]
-                     [:td.rightjust (:memdes line)]
-                     [:td (:del? line)]
-                     [:td.rightjust (u/tocurrency (:memcost line))]
-                     ]
-                    ))
-    [:tbody
-     [:tr
+           (for [line member-order]
+             [:tr
+              [:td (:code line)]
+              [:td (:description line)]
+              [:td (:case-size line)]
+              [:td.rightjust (u/tocurrency (:unit-cost line))]
+              [:td.rightjust (u/tocurrency (:vat-amount line))]
+              [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
+              [:td.rightjust (:albany-units line)]
+              [:td.rightjust (:memdes line)]
+              [:td (:del? line)]
+              [:td.rightjust (u/tocurrency (:memcost line))]
+              ]
+             ))
+     [:tbody
+      [:tr
        [:td {:colspan 9} (str "Total for " order-date)]
        [:td.rightjust (u/tocurrency order-total)]
+       ]
       ]
-     (map #(emit-balance-html % balance) bal-keys)
+     ]
+    ]
+   [:div.balance
+    [:table.balance
+      [:thead
+       [ :tr
+        [:th {:colspan 2} "Balance information"]
+        ]]
+      [:tbody
+       (map #(emit-balance-html % balance) bal-keys)
+       ]
      ]
     ]])
 
