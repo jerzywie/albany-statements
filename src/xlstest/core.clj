@@ -63,9 +63,7 @@
       [:&:nth-child<odd> {:background light-blue}]]
      ]
     [:table.order {:width "100%"}]
-    [:table.balance {:width "25%"}]
-    [:div.order :div.balance {:width "100%"}]
-    [:div.balance {:float "right"}]
+    [:div.balance {:float "right"} {:margin-top "8px"}]
     [:.rightjust {:text-align "right"}]
     )))
 
@@ -216,7 +214,6 @@
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         file-name (str (member-display-name member-name) "-" order-date ".html")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
-    (println "mem-bal " mem-balance)
     (spit  file-name
            (p/html5 (statement-head member-name)
                     (statement-body member-name member-order mem-balance order-date order-total)))))
