@@ -63,24 +63,23 @@
       [:&:nth-child<odd> {:background light-blue}]]
      ]
     [:table.order {:width "100%"}]
-    [:div.balance {:float "right"} {:margin-top "8px"}]
+    [:div.balance {:float "right"} {:margin-top "8px" :margin-bottom "8px"}]
     [:.rightjust {:text-align "right"}]
     )))
 
 (defn emit-balance-html
   [key balance]
-  (let [[n v] (bal/bal-item key balance)]
-    [:tr
-     [:td n]
-     [:td.rightjust (u/tocurrency v)]
-     ]))
+  (let [[n v :as item] (bal/bal-item key balance)]
+    (when-not (nil? item)
+      [:tr
+       [:td n]
+       [:td.rightjust (u/tocurrency v)]
+       ])))
 
 (defn statement-head [member-name]
   [:head
    [:title (str "Statement for " (member-display-name member-name))]
    [:style {:type "text/css"} (gen-statement-css)]])
-
-(def bal-keys [:bf :ordertotal :joinfee :levy :owed :moneyin :balance :cooptomember :membertocoop :cf])
 
 (defn statement-body [member-name member-order balance order-date order-total]
   [:body
@@ -131,7 +130,7 @@
         [:th {:colspan 2} "Balance information"]
         ]]
       [:tbody
-       (map #(emit-balance-html % balance) bal-keys)
+       (map #(emit-balance-html % balance) bal/bal-keys)
        ]
      ]
     ]])

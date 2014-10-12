@@ -14,6 +14,10 @@
 
 (def common-cols {:A :name :C :subname :Z :key})
 
+(def bal-keys [:bf :ordertotal :joinfee :levy :owed :moneyin :balance :cooptomember :membertocoop :cf])
+
+(def optional-bal-keys [:membertocoop :joinfee :levy :cooptomember])
+
 (defn get-balance-sheet
   [wb]
   (select-sheet "Financials" wb))
@@ -29,8 +33,14 @@
         clean-bal (map keywordize-bal ( filter #(:key %) raw-bal))]
     (apply merge clean-bal)))
 
-(defn bal-item [k bal]
+(defn bal-item
+  "produce name value pair for balance item,
+   unless it's an optional item with value zero"
+  [k bal]
   (let [item (k bal)
         val (:val item)
-        name (s/trim (str (:name item) (:subname item))) ]
-    [name (if (nil? val) 0.0 val)]))
+        finalval (if (nil? val) 0.0 val)
+        name (s/trim (str (:name item) " " (:subname item))) ]
+    (when-not (and (some #{k} optional-bal-keys)
+                    (= finalval 0.0))
+      [name finalval])))
