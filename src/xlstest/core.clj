@@ -65,6 +65,7 @@
     [:table.order {:width "100%"}]
     [:div.balance {:float "right"} {:margin-top "8px" :margin-bottom "8px"}]
     [:.rightjust {:text-align "right"}]
+    [:.bold {:font-weight "bold"}]
     )))
 
 (defn emit-balance-html
@@ -116,7 +117,7 @@
               ]
              ))
      [:tbody
-      [:tr
+      [:tr.bold
        [:td {:colspan 9} (str "Total for " order-date)]
        [:td.rightjust (u/tocurrency order-total)]
        ]
