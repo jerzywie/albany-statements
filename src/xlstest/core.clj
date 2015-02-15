@@ -254,23 +254,31 @@
     (doall (map #(emit-order-html % all-orders order-date coordinator) (keys member-data)))
     ))
 
-(def usage "Usage:  -s[tatements] | -o[rder-forms] spreadsheet-name order-date coordinator")
+(defn usage [output-type]
+  (case output-type
+    "-s" "Usage: -s(tatements) spreadsheet-name order-date."
+    "-o" "Usage: -o(rder-forms) spreadsheet-name order-date coordinator."
+    "Usage:  -s(tatements) | -o(rder-forms) spreadsheet-name order-date [coordinator]."))
 
 (defn -main
   "Generate all statements from a given Albany spreadsheet."
-  [output-type  & args]
+  [& args]
    ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
-  (println "output-type is " output-type)
-  (case output-type
-    "-s"
-    (cond (>= (count args) 2)
-          (do (println "writing statement files for " (second args))
-              (apply generate-statements args))
-          :else (println usage))
-    "-o"
-    (cond (>= (count args) 3)
-          (do (println "writing order forms for " (second args))
-              (apply generate-orderforms args))
-          :else (println usage))
-    (println usage)))
+  (if (<= (count args) 0)
+    (println (usage nil))
+    (let [output-type (first args)
+          parms (rest args)]
+     (println "output-type is " output-type)
+     (case output-type
+       "-s"
+       (cond (>= (count parms) 2)
+             (do (println "writing statement files for " (second parms))
+                 (apply generate-statements parms))
+             :else (println (usage output-type)))
+       "-o"
+       (cond (>= (count parms) 3)
+             (do (println "writing order forms for " (second parms))
+                 (apply generate-orderforms parms))
+             :else (println (usage output-type)))
+       (println (usage output-type))))))
