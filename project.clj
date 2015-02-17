@@ -1,4 +1,4 @@
-(defproject xlstest "0.2.0"
+(defproject xlstest "0.3.0-SNAPSHOT"
   :description "spreadsheet reading tests"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
