@@ -80,6 +80,7 @@
 (defn statement-head [member-name]
   [:head
    [:title (str "Statement for " (member-display-name member-name))]
+   [:meta {:charset "UTF-8"}]
    [:style {:type "text/css"} (gen-statement-css)]])
 
 (defn statement-body [member-name member-order balance order-date order-total]
@@ -159,6 +160,7 @@
 (defn order-head [member-name]
   [:head
    [:title (str "Order for " (member-display-name member-name))]
+   [:meta {:charset "UTF-8"}]
    [:style {:type "text/css"} (gen-order-css)]])
 
 (defn order-body [member-name member-order order-date order-total coordinator]
