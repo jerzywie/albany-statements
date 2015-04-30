@@ -18,7 +18,7 @@
 
 ;; it can then be merge'd with the common-cols
 
-(def member-data {:sally 13 :isabel 15 :jerzy 17 :alice 19 :carol 21 :clair 23 :annabelle 25 :deborah 27 :ann 29 :matthew 31})
+(def member-data {:sally 13 :isabel 15 :jerzy 17 :alice 19 :carol 21 :clair 23 :annabelle 25 :deborah 27 :frank 29 :matthew 31})
 
 (def common-cols {:A :code :B :description :C :case-size :E :albany-units :G :del? :H :unit-cost :J :vat-amount})
 

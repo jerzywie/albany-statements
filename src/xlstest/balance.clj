@@ -10,7 +10,7 @@
 
 
 
-(def member-data {:sally 4 :isabel 6 :jerzy 8 :alice 10 :carol 12 :clair 14 :annabelle 16 :deborah 18 :ann 20 :matthew 22})
+(def member-data {:sally 4 :isabel 6 :jerzy 8 :alice 10 :carol 12 :clair 14 :annabelle 16 :deborah 18 :frank 20 :matthew 22})
 
 (def common-cols {:A :name :C :subname :Z :key})
 
