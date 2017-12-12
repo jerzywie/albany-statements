@@ -5,20 +5,19 @@
   (:require [hiccup.page :as p])
   (:require [garden.core])
   (:require [garden.stylesheet]
-            [xlstest.balance :as bal]
-            [xlstest.util :as u]))
+            [xlstest
+             [balance :as bal]
+             [util :as u]
+             [config :as config]]))
 
+(def index-offset 11)
+(def index-mult 2)
 
+(defn column-index
+  [[n {:keys [col]}]]
+  [n (-> col (* index-mult) (+ index-offset))])
 
-;; this produces the map of columns for a given member
-(defn member-cols
-  "Produce the map of columns for a given member"
-  [index]
- (zipmap  (vec  (map u/to-col (range index (+ 2 index)))) [:memdes :memcost] ))
-
-;; it can then be merge'd with the common-cols
-
-(def member-data {:sally 13 :isabel 15 :jerzy 17 :alice 19 :carol 21 :clair 23 :annabelle 25 :deborah 27 :frank 29 :matthew 31})
+(def member-data (into {} (map column-index (:members config/config-data))))
 
 (def common-cols {:A :code :B :description :C :case-size :E :albany-units :G :del? :H :unit-cost :J :vat-amount})
 
@@ -31,7 +30,7 @@
 (defn get-member-order
   "extracts a member's order from the sheet"
   [[name index] sheet]
-  (let [m-cols (member-cols index)
+  (let [m-cols (u/member-cols index [:memdes :memcost])
         order-cols (merge common-cols m-cols)
         whole-order (select-columns order-cols sheet)
         member-order (filter #(gt-zero (:memdes %))  whole-order)]

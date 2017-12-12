@@ -7,5 +7,7 @@
                  [dk.ative/docjure "1.6.0"]
                  [hiccup "1.0.4"]
                  [garden "0.1.0-beta6"]]
+  :profiles {:uberjar {:aot :all}}
   :uberjar-name "xlstest.jar"
-  :main xlstest.core)
+  :main xlstest.core
+  :aot [xlstest.config])

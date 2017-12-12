@@ -1,3 +1,3 @@
 (ns xlstest.config)
 
-(def config-data (read-string (slurp "config.data")))
+(def config-data (read-string (slurp "resources/config.data")))

@@ -2,15 +2,25 @@
   (:use [dk.ative.docjure.spreadsheet] :reload-all)
   (:gen-class)
   (:require [clojure.string :as s]
-            [xlstest.util :as util]
+            [xlstest
+             [util :as util]
+             [config :as config]]
             [hiccup.core :as h]
             [hiccup.page :as p]
             [garden.core]
             [garden.stylesheet]))
 
 
+(def index-offset 2)
+(def index-mult 2)
 
-(def member-data {:sally 4 :isabel 6 :jerzy 8 :alice 10 :carol 12 :clair 14 :annabelle 16 :deborah 18 :frank 20 :matthew 22})
+(defn column-index
+  [[n {:keys [col]}]]
+  [n (-> col (* index-mult) (+ index-offset))])
+
+(def member-data (into {} (map column-index (:members config/config-data))))
+
+(def member-data-old {:sally 4 :isabel 6 :jerzy 8 :alice 10 :carol 12 :clair 14 :annabelle 16 :deborah 18 :frank 20 :matthew 22})
 
 (def common-cols {:A :name :C :subname :Z :key})
 
