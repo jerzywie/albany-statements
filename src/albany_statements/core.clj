@@ -1,11 +1,11 @@
-(ns xlstest.core
+(ns albany-statements.core
   (:use [dk.ative.docjure.spreadsheet] :reload-all)
   (:gen-class)
   (:require [hiccup.core :as h])
   (:require [hiccup.page :as p])
   (:require [garden.core])
   (:require [garden.stylesheet]
-            [xlstest
+            [albany-statements
              [balance :as bal]
              [util :as u]
              [config :as config]]))

@@ -1,5 +1,5 @@
-(defproject xlstest "0.3.0-SNAPSHOT"
-  :description "spreadsheet reading tests"
+(defproject albany-statements "0.3.0-SNAPSHOT"
+  :description "Albany order forms and statements based on order xls"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -8,6 +8,6 @@
                  [hiccup "1.0.4"]
                  [garden "0.1.0-beta6"]]
   :profiles {:uberjar {:aot :all}}
-  :uberjar-name "xlstest.jar"
-  :main xlstest.core
-  :aot [xlstest.config])
+  :uberjar-name "albany-statements.jar"
+  :main albany-statements.core
+  :aot [albany-statements.config])

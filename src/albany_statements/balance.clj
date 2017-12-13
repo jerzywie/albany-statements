@@ -1,8 +1,8 @@
-(ns xlstest.balance
+(ns albany-statements.balance
   (:use [dk.ative.docjure.spreadsheet] :reload-all)
   (:gen-class)
   (:require [clojure.string :as s]
-            [xlstest
+            [albany-statements
              [util :as util]
              [config :as config]]
             [hiccup.core :as h]
