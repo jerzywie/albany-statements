@@ -22,4 +22,20 @@
 (defn member-cols
   "Produce the map of columns for a given member"
   [index keys]
- (zipmap  (vec  (map to-col (range index (+ (count keys) index)))) keys ))
+  (zipmap  (vec  (map to-col (range index (+ (count keys) index)))) keys ))
+
+(defn try-get-integer
+  "Try to return an integer. Return passed value otherwise."
+  [v]
+
+  (let [bigint-v (/ (int (* v 100)) 100)
+        int-v (int bigint-v)]
+    (prn "bigint-v" bigint-v "int-v" int-v)
+    (if (= bigint-v int-v) int-v v)))
+
+(defn essential-cases
+  "Calculate the quantity of an order item as a number of Essential cases."
+  [des-albany-qty albany-units-per-case]
+  (let [int?-des-albany-qty (try-get-integer des-albany-qty)
+        int?-albany-units-per-case (try-get-integer albany-units-per-case)]
+    (try-get-integer (/ int?-des-albany-qty int?-albany-units-per-case))))
