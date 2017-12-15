@@ -176,17 +176,17 @@
    [:table.order
     [:thead
      [:tr
-      [:th "Code"]
-      [:th "Item"]
-      [:th "Unit Q'ty"]
-      [:th "Unit Price"]
-      [:th "Albany units per Essential case"]
-      [:th "Pref Q'ty (Albany units)"]
-      [:th "Pref Q'ty (Essential cases"]
-      [:th "Actual Q'ty"]
-      [:th "Est price"]
-      [:th "Final Q'ty"]
-      ]]
+      [:th {:rowspan 2} "Code"]
+      [:th {:rowspan 2} "Item"]
+      [:th {:rowspan 2} "Unit Q'ty"]
+      [:th {:rowspan 2} "Unit Price"]
+      [:th {:rowspan 2} [:div [:span "Albany units per"] [:br] [:span "Essential case"]] ]
+      [:th {:colspan 2} "Pref Q'ty"]
+      [:th {:rowspan 2} "Actual Q'ty"]
+      [:th {:rowspan 2} "Est price"]
+      [:th {:rowspan 2} "Final Q'ty"]
+      ]
+     [:tr [:th "Albany units"] [:th "Essential cases"]]]
     (into [:tbody]
           (for [line member-order]
             [:tr
@@ -203,14 +203,14 @@
             ))
     [:tbody
      [:tr
-      [:td.rightjust {:colspan 6} "Estimated Sub-total for above items "]
-      [:td.rightjust (u/tocurrency order-total)]
+      [:td.rightjust {:colspan 8} [:b "Estimated Sub-total for above items "]]
+      [:td.rightjust [:b (u/tocurrency order-total)]]
       [:td " "]
       ]]
 
     (into [:tbody]
           (repeat 10
-                  [:tr (repeat 8 [:td.space " "])]))
+                  [:tr (repeat 10 [:td.space " "])]))
     ]
    ])
 

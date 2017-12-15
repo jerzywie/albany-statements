@@ -30,7 +30,6 @@
 
   (let [bigint-v (/ (int (* v 100)) 100)
         int-v (int bigint-v)]
-    (prn "bigint-v" bigint-v "int-v" int-v)
     (if (= bigint-v int-v) int-v v)))
 
 (defn essential-cases
