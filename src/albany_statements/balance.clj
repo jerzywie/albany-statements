@@ -13,6 +13,7 @@
 
 (def index-offset 2)
 (def index-mult 2)
+(def key-offset-from-last-member 3)
 
 (defn column-index
   [[n {:keys [col]}]]
@@ -20,9 +21,9 @@
 
 (def member-data (into {} (map column-index (:members config/config-data))))
 
-(def member-data-old {:sally 4 :isabel 6 :jerzy 8 :alice 10 :carol 12 :clair 14 :annabelle 16 :deborah 18 :frank 20 :matthew 22})
+(def key-column (->> (vals member-data) (apply max) (+ key-offset-from-last-member) util/to-col))
 
-(def common-cols {:A :name :C :subname :Z :key})
+(def common-cols {:A :name :C :subname key-column :key})
 
 (def bal-keys [:bf :ordertotal :joinfee :levy :owed :moneyin :balance :cooptomember :membertocoop :cf])
 
