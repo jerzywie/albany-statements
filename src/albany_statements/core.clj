@@ -196,7 +196,7 @@
              [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
              [:td " "]
              [:td.rightjust (u/tocurrency (:memcost line))]
-             [:td " "]]
+             [:td.rightjust (if-not (nil? (:del? line)) (str "(" (:del? line) ")") " ")]]
             ))
     [:tbody
      [:tr
