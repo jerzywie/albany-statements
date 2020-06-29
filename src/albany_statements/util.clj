@@ -4,7 +4,12 @@
   (:require [hiccup.core :as h]
             [hiccup.page :as p]
             [garden.core]
-            [garden.stylesheet]))
+            [garden.stylesheet]
+            [clojure.string :as s]))
+
+(def brand-delim-start "[")
+(def brand-delim-end "]")
+(def org-marker "ORG")
 
 ;;This was obtained from Stackoverflow
 (defn to-col [num]
@@ -38,3 +43,19 @@
   (let [int?-des-albany-qty (try-get-integer des-albany-qty)
         int?-albany-units-per-case (try-get-integer albany-units-per-case)]
     (try-get-integer (/ int?-des-albany-qty int?-albany-units-per-case))))
+
+(defn format-description
+  "Try to extract product brand and apply emboldening to product name"
+  [rawdesc]
+  (if (s/starts-with? rawdesc brand-delim-start)
+    (let [end-brand (s/index-of rawdesc brand-delim-end)
+          org-pos (s/index-of rawdesc org-marker)
+          prod-name (if org-pos
+                      (subs rawdesc (inc end-brand) org-pos)
+                      (subs rawdesc (inc end-brand)))
+          brand-name (subs rawdesc 1 end-brand)]
+      [:span
+       [:em brand-name]
+       [:b prod-name]
+       (if org-pos org-marker)])
+    [:b rawdesc]))

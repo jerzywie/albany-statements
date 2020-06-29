@@ -105,7 +105,7 @@
            (for [line member-order]
              [:tr
               [:td (:code line)]
-              [:td (:description line)]
+              [:td (u/format-description (:description line))]
               [:td (:case-size line)]
               [:td.rightjust (u/tocurrency (:unit-cost line))]
               [:td.rightjust (u/tocurrency (:vat-amount line))]
@@ -152,6 +152,7 @@
      ]
     [:.rightjust {:text-align "right"}]
     [:td.space {:padding-top "30px"}]
+    [:.bigtext {:font-size "1.5em"}]
     (garden.stylesheet/at-media {:print true}
                                 [:thead {:display "table-header-group"}])
     )))
@@ -168,8 +169,8 @@
    [:table.order
     [:thead
      [:tr
-      [:th (str "Name: " (member-display-name member-name))]
-      [:th (str "Order Date: " order-date)]
+      [:th [:span "Name: " [:b.bigtext (member-display-name member-name)]]]
+      [:th [:span "Order Date: " [:b.bigtext order-date]]]
       [:th (str "Coordinator: " coordinator)]
       ]]]
    [:p " "]
@@ -189,8 +190,8 @@
     (into [:tbody]
           (for [line member-order]
             [:tr
-             [:td (:code line)]
-             [:td (:description line)]
+             [:td [:b (:code line)]]
+             [:td (u/format-description (:description line))]
              [:td (:case-size line)]
              [:td.rightjust (u/tocurrency (:unit-cost line))]
              [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
