@@ -10,7 +10,7 @@
              [util :as u]
              [config :as config]]))
 
-(def index-offset 11)
+(def index-offset 12)
 (def index-mult 2)
 
 (defn column-index
@@ -19,7 +19,7 @@
 
 (def member-data (into {} (map column-index (:members config/config-data))))
 
-(def common-cols {:A :code :B :description :C :case-size :E :albany-units :G :del? :H :unit-cost :J :vat-amount})
+(def common-cols {:A :code :B :description :C :case-size :E :albany-units :G :del? :H :unit-cost :K :vat-amount})
 
 (defn gt-zero
   "Safe > 0 test. Returns falsey for any number <=0 or anything that isn't a number."
