@@ -1,4 +1,4 @@
-(defproject albany-statements "0.3.3-SNAPSHOT"
+(defproject albany-statements "0.3.3"
   :description "Albany order forms and statements based on order xls"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
