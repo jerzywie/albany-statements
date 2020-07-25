@@ -90,16 +90,20 @@
     [:table.order
      [:thead
       [:tr
-       [:th "Code"]
-       [:th "Description"]
-       [:th "Packsize"]
-       [:th "Case Net"]
+       [:th {:rowspan 2} "Code"]
+       [:th {:rowspan 2} "Description"]
+       [:th {:rowspan 2} "Packsize"]
+       [:th {:colspan 3} "Cost per Case"]
+       [:th {:rowspan 2} "Albany units/case"]
+       [:th {:colspan 2} "Amount purchased"]
+       [:th {:rowspan 2}"Status"]
+       [:th {:rowspan 2}"Price charged"]]
+      [:tr
+       [:th "Net"]
        [:th "VAT"]
-       [:th "Case Gross"]
-       [:th "Albany units/case"]
-       [:th "Albany units purchased"]
-       [:th "Del?"]
-       [:th "Price charged"]
+       [:th "Gross"]
+       [:th "Albany units"]
+       [:th "Cases"]
        ]]
      (into [:tbody]
            (for [line member-order]
@@ -112,13 +116,14 @@
               [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
               [:td.rightjust (:albany-units line)]
               [:td.rightjust (:memdes line)]
+              [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
               [:td (:del? line)]
               [:td.rightjust (u/tocurrency (:memcost line))]
               ]
              ))
      [:tbody
       [:tr.bold
-       [:td {:colspan 9} (str "Total for " order-date)]
+       [:td {:colspan 10} (str "Total for " order-date)]
        [:td.rightjust (u/tocurrency order-total)]
        ]
       ]
