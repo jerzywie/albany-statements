@@ -1,14 +1,14 @@
 (ns albany-statements.core
-  (:use [dk.ative.docjure.spreadsheet] :reload-all)
-  (:gen-class)
-  (:require [hiccup.core :as h])
-  (:require [hiccup.page :as p])
-  (:require [garden.core])
-  (:require [garden.stylesheet]
+  (:require [dk.ative.docjure.spreadsheet :refer [select-columns load-workbook select-sheet]]
+            [hiccup.core :as h]
+            [hiccup.page :as p]
+            [garden.core]
+            [garden.stylesheet]
             [albany-statements
              [balance :as bal]
              [util :as u]
-             [config :as config]]))
+             [config :as config]])
+  (:gen-class))
 
 (def index-offset 12)
 (def index-mult 2)
