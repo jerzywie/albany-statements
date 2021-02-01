@@ -237,10 +237,9 @@
 
 ;; end of html and css-related stuff
 
-(defn generate-statements [spreadsheet-name order-date]
+(defn generate-statements [wb order-date]
   "Do the work of statement generation."
-  (let [wb (load-workbook spreadsheet-name)
-        order-sheet (select-sheet "Collated Order" wb)
+  (let [order-sheet (select-sheet "Collated Order" wb)
         balance-sheet (bal/get-balance-sheet wb)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
@@ -252,41 +251,52 @@
                 (keys member-data)))
     ))
 
-(defn generate-orderforms [spreadsheet-name order-date coordinator]
+(defn generate-orderforms [wb order-date coordinator]
   "Do the work of order-form generation."
-  (let [wb (load-workbook spreadsheet-name)
-        sheet (select-sheet "Collated Order" wb)
+  (let [sheet (select-sheet "Collated Order" wb)
         all-orders (reduce conj (map #(get-member-order % sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
     (doall (map #(emit-order-html % all-orders order-date coordinator) (keys member-data)))
     ))
 
-(defn usage [output-type]
-  (case output-type
-    "-s" "Usage: -s(tatements) spreadsheet-name order-date."
-    "-o" "Usage: -o(rder-forms) spreadsheet-name order-date coordinator."
-    "Usage:  -s(tatements) | -o(rder-forms) spreadsheet-name order-date [coordinator]."))
+(defn usage
+  ([output-type message]
+   (when message (println message))
+   (println (case output-type
+              "-s" "Usage: -s(tatements) spreadsheet-name order-date."
+              "-o" "Usage: -o(rder-forms) spreadsheet-name order-date coordinator."
+              "Usage:  -s(tatements) | -o(rder-forms) spreadsheet-name order-date [coordinator].")))
+
+  ([output-type]
+    (usage output-type nil)))
+
+(defn do-generate [output-type spreadsheet-name order-date coordinator]
+  (println "output-type is " output-type)
+  (let [wb (load-workbook spreadsheet-name)]
+    (case output-type
+      "-s"
+      (do (println "writing statement files for " spreadsheet-name)
+          (generate-statements wb order-date))
+      "-o"
+      (if (nil? coordinator)
+        (usage output-type "coordinator name must be supplied")
+        (do (println "writing order forms for " spreadsheet-name)
+            (generate-orderforms wb order-date coordinator))))))
+
+(defn process-args [args]
+  (if (< (count args) 3)
+    (usage nil)
+    (let [[output-type spreadsheet-name order-date]  args
+          coordinator (nth args 3 nil)]
+      (case output-type
+        ("-s" "-o")
+        (do-generate output-type spreadsheet-name order-date coordinator)
+        (usage nil "Usage type must be -s or -o")))))
 
 (defn -main
   "Generate all statements from a given Albany spreadsheet."
   [& args]
-   ;; work around dangerous default behaviour in Clojure
+  ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
-  (if (<= (count args) 0)
-    (println (usage nil))
-    (let [output-type (first args)
-          parms (rest args)]
-     (println "output-type is " output-type)
-     (case output-type
-       "-s"
-       (cond (>= (count parms) 2)
-             (do (println "writing statement files for " (second parms))
-                 (apply generate-statements parms))
-             :else (println (usage output-type)))
-       "-o"
-       (cond (>= (count parms) 3)
-             (do (println "writing order forms for " (second parms))
-                 (apply generate-orderforms parms))
-             :else (println (usage output-type)))
-       (println (usage output-type))))))
+  (process-args args))
