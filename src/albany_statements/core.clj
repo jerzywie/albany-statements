@@ -299,4 +299,7 @@
   [& args]
   ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
-  (process-args args))
+
+  (try
+    (process-args args)
+    (catch Exception e (str "Error: " (.getMessage e)))))
