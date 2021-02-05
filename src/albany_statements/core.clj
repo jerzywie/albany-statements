@@ -7,7 +7,9 @@
             [albany-statements
              [balance :as bal]
              [util :as u]
-             [config :as config]])
+             [config :as config]
+             [sheet-status :as ss]])
+
   (:gen-class))
 
 (def index-offset 12)
@@ -82,7 +84,13 @@
    [:meta {:charset "UTF-8"}]
    [:style {:type "text/css"} (gen-statement-css)]])
 
-(defn statement-body [member-name member-order balance order-date order-total]
+(defn statement-body [member-name
+                      member-order
+                      balance
+                      order-date
+                      order-total
+                      spreadsheet-name
+                      revision]
   [:body
    [:h1 "Albany Coop"]
    [:h2 (str "Statement for " (member-display-name member-name) " - " order-date)]
@@ -139,7 +147,12 @@
        (map #(emit-balance-html % balance) bal/bal-keys)
        ]
      ]
-    ]])
+    ]
+   [:div
+    [:table.order
+     [:tbody
+      [:tr
+       [:td (format "Taken from %s. Save revision %d" spreadsheet-name (int revision))]]]]]])
 
 
 (defn gen-order-css []
@@ -217,14 +230,25 @@
     ]
    ])
 
-(defn emit-statement-html [member-name all-orders mem-balance order-date]
+(defn emit-statement-html [member-name
+                           all-orders
+                           mem-balance
+                           order-date
+                           spreadsheet-name
+                           revision]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         file-name (str (member-display-name member-name) "-" order-date ".html")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
     (spit  file-name
            (p/html5 (statement-head member-name)
-                    (statement-body member-name member-order mem-balance order-date order-total)))))
+                    (statement-body member-name
+                                    member-order
+                                    mem-balance
+                                    order-date
+                                    order-total
+                                    spreadsheet-name
+                                    revision)))))
 
 (defn emit-order-html [member-name all-orders order-date coordinator]
   (let [member-order (member-name all-orders)
@@ -237,7 +261,7 @@
 
 ;; end of html and css-related stuff
 
-(defn generate-statements [wb order-date]
+(defn generate-statements [wb order-date spreadsheet-name revision]
   "Do the work of statement generation."
   (let [order-sheet (select-sheet "Collated Order" wb)
         balance-sheet (bal/get-balance-sheet wb)
@@ -247,7 +271,9 @@
     (doall (map #(emit-statement-html %
                                       all-orders
                                       (bal/get-member-balance % balance-sheet)
-                                      order-date)
+                                      order-date
+                                      spreadsheet-name
+                                      revision)
                 (keys member-data)))
     ))
 
@@ -273,11 +299,14 @@
 
 (defn do-generate [output-type spreadsheet-name order-date coordinator]
   (println "output-type is " output-type)
-  (let [wb (load-workbook spreadsheet-name)]
+  (let [wb (load-workbook spreadsheet-name)
+        sheet-status (ss/get-sheet-status wb)]
+    (when (not= (:state sheet-status) "Closed")
+      (throw (IllegalStateException. "The spreadsheet must be saved and closed.")))
     (case output-type
       "-s"
       (do (println "writing statement files for " spreadsheet-name)
-          (generate-statements wb order-date))
+          (generate-statements wb order-date spreadsheet-name (:revision sheet-status)))
       "-o"
       (if (nil? coordinator)
         (usage output-type "coordinator name must be supplied")
