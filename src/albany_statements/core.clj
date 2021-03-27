@@ -331,4 +331,4 @@
 
   (try
     (process-args args)
-    (catch Exception e (str "Error: " (.getMessage e)))))
+    (catch Exception e (println (str "Error: " (.getMessage e))))))
