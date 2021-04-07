@@ -1,8 +1,10 @@
 (ns albany-statements.core
   (:require [dk.ative.docjure.spreadsheet :refer [select-columns load-workbook select-sheet]]
+            [clojure.string :as string]
             [hiccup.core :as h]
             [hiccup.page :as p]
             [garden.core]
+            [clojure.tools.cli :refer [parse-opts]]
             [garden.stylesheet]
             [albany-statements
              [balance :as bal]
@@ -14,6 +16,33 @@
 
 (def index-offset 12)
 (def index-mult 2)
+
+(def opt-sep " | ")
+
+(def output-types {:o "order-forms" :s "statements"})
+(def versions {:d "draft" :f "final"})
+
+(defn list-options [valid-map] (string/join opt-sep (vals valid-map)))
+
+(defn keywordise-option [opt] (keyword (string/lower-case (subs opt 0 1))))
+
+(defn keyword-validator [valid-map]
+  [(fn [v] (contains? (set (keys valid-map)) v))
+   (str "must be one of: " (list-options valid-map))])
+
+(def cli-options
+  [;; First three strings describe a short-option, long-option with optional
+   ;; example argument description, and a description. All three are optional
+   ;; and positional.
+   ["-o" "--output-type OUTPUT-TYPE" (str "Type of output: " (list-options output-types))
+    :parse-fn keywordise-option
+    :validate (keyword-validator output-types)]
+   ["-c" "--coordinator COORDINATOR" "Coordinator name (required for output-type=order-forms)"]
+   ["-v" "--version VERSION" "Version of order-form: draft  | final"
+    :parse-fn keywordise-option
+    :validate (keyword-validator versions)]
+   ["-h" "--help"]])
+
 
 (defn column-index
   [[n {:keys [col]}]]
@@ -261,9 +290,18 @@
 
 ;; end of html and css-related stuff
 
-(defn generate-statements [wb order-date spreadsheet-name revision]
+(defn get-spreadsheet-data [spreadsheet-name]
+  (let [wb (load-workbook spreadsheet-name)
+        sheet-status (ss/get-sheet-status wb)]
+    (when (not= (:state sheet-status) "Closed")
+      (throw (IllegalStateException. "The spreadsheet must be saved and closed.")))
+    {:wb wb
+     :revision (:revision sheet-status)
+     :order-sheet (select-sheet "Collated Order" wb)}))
+
+(defn generate-statements [spreadsheet-name order-date]
   "Do the work of statement generation."
-  (let [order-sheet (select-sheet "Collated Order" wb)
+  (let [{:keys [wb order-sheet revision]} (get-spreadsheet-data spreadsheet-name)
         balance-sheet (bal/get-balance-sheet wb)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
@@ -277,51 +315,51 @@
                 (keys member-data)))
     ))
 
-(defn generate-orderforms [wb order-date coordinator]
+(defn generate-orderforms [spreadsheet-name order-date coordinator]
   "Do the work of order-form generation."
-  (let [sheet (select-sheet "Collated Order" wb)
-        all-orders (reduce conj (map #(get-member-order % sheet) member-data))]
+  (let [{:keys [wb order-sheet]} (get-spreadsheet-data spreadsheet-name)
+        all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
     (doall (map #(emit-order-html % all-orders order-date coordinator) (keys member-data)))
     ))
 
 (defn usage
-  ([output-type message]
-   (when message (println message))
-   (println (case output-type
-              "-s" "Usage: -s(tatements) spreadsheet-name order-date."
-              "-o" "Usage: -o(rder-forms) spreadsheet-name order-date coordinator."
-              "Usage:  -s(tatements) | -o(rder-forms) spreadsheet-name order-date [coordinator].")))
+  ([options-summary message]
+   (->> ["Albany Order-Form/Statement generator."
+         "Usage: program-name [options] spreadsheet-name order-date-id"
+         ""
+         "Options:"
+         options-summary
+         ""
+         message]
+        (string/join \newline)
+        (println)))
 
   ([output-type]
     (usage output-type nil)))
 
-(defn do-generate [output-type spreadsheet-name order-date coordinator]
-  (println "output-type is " output-type)
-  (let [wb (load-workbook spreadsheet-name)
-        sheet-status (ss/get-sheet-status wb)]
-    (when (not= (:state sheet-status) "Closed")
-      (throw (IllegalStateException. "The spreadsheet must be saved and closed.")))
-    (case output-type
-      "-s"
-      (do (println "writing statement files for " spreadsheet-name)
-          (generate-statements wb order-date spreadsheet-name (:revision sheet-status)))
-      "-o"
-      (if (nil? coordinator)
-        (usage output-type "coordinator name must be supplied")
-        (do (println "writing order forms for " spreadsheet-name)
-            (generate-orderforms wb order-date coordinator))))))
+(defn do-generate [output-type spreadsheet-name order-date coordinator summary]
+  (case output-type
+    :s
+    (do (println "writing statement files for " spreadsheet-name)
+        (generate-statements spreadsheet-name order-date))
+    :o
+    (if (nil? coordinator)
+      (usage summary "Coordinator name must be supplied")
+      (do (println "writing order forms for " spreadsheet-name)
+          (generate-orderforms spreadsheet-name order-date coordinator)))))
 
 (defn process-args [args]
-  (if (< (count args) 3)
-    (usage nil)
-    (let [[output-type spreadsheet-name order-date]  args
-          coordinator (nth args 3 nil)]
-      (case output-type
-        ("-s" "-o")
-        (do-generate output-type spreadsheet-name order-date coordinator)
-        (usage nil "Usage type must be -s or -o")))))
+  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+    (cond
+      (:help options) (usage summary)
+      (not= (count arguments) 2) (usage summary "Both spreadsheet-name and order-date-id must be supplied")
+      errors (usage errors)
+      :else
+      (let [[spreadsheet-name order-date]  arguments
+            {:keys [coordinator output-type version]} options]
+        (do-generate output-type spreadsheet-name order-date coordinator summary)))))
 
 (defn -main
   "Generate all statements from a given Albany spreadsheet."

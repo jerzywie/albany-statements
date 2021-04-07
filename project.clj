@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [dk.ative/docjure "1.6.0"]
                  [hiccup "1.0.4"]
+                 [org.clojure/tools.cli "1.0.206"]
                  [garden "0.1.0-beta6"]]
   :profiles {:uberjar {:aot :all}}
   :uberjar-name "albany-statements.jar"
