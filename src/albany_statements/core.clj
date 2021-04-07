@@ -10,39 +10,13 @@
              [balance :as bal]
              [util :as u]
              [config :as config]
-             [sheet-status :as ss]])
+             [sheet-status :as ss]
+             [cli :as cli]])
 
   (:gen-class))
 
 (def index-offset 12)
 (def index-mult 2)
-
-(def opt-sep " | ")
-
-(def output-types {:o "order-forms" :s "statements"})
-(def versions {:d "draft" :f "final"})
-
-(defn list-options [valid-map] (string/join opt-sep (vals valid-map)))
-
-(defn keywordise-option [opt] (keyword (string/lower-case (subs opt 0 1))))
-
-(defn keyword-validator [valid-map]
-  [(fn [v] (contains? (set (keys valid-map)) v))
-   (str "must be one of: " (list-options valid-map))])
-
-(def cli-options
-  [;; First three strings describe a short-option, long-option with optional
-   ;; example argument description, and a description. All three are optional
-   ;; and positional.
-   ["-o" "--output-type OUTPUT-TYPE" (str "Type of output: " (list-options output-types))
-    :parse-fn keywordise-option
-    :validate (keyword-validator output-types)]
-   ["-c" "--coordinator COORDINATOR" "Coordinator name (required for output-type=order-forms)"]
-   ["-v" "--version VERSION" "Version of order-form: draft  | final"
-    :parse-fn keywordise-option
-    :validate (keyword-validator versions)]
-   ["-h" "--help"]])
-
 
 (defn column-index
   [[n {:keys [col]}]]
@@ -210,9 +184,12 @@
    [:meta {:charset "UTF-8"}]
    [:style {:type "text/css"} (gen-order-css)]])
 
-(defn order-body [member-name member-order order-date order-total coordinator]
+(defn order-body [member-name member-order order-date order-total coordinator version]
   [:body
    [:h1 "Albany Food Coop     Order Form"]
+   (case version
+     :d [:h2 "Pre-meeting DRAFT"]
+     :f [:h2 "FINAL for order sorting"])
    [:table.order
     [:thead
      [:tr
@@ -279,14 +256,19 @@
                                     spreadsheet-name
                                     revision)))))
 
-(defn emit-order-html [member-name all-orders order-date coordinator]
+(defn emit-order-html [member-name all-orders order-date coordinator version]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         file-name (str (member-display-name member-name) "-" order-date "-OrderForm.html")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
     (spit  file-name
            (p/html5 (order-head member-name)
-                    (order-body member-name member-order order-date order-total coordinator)))))
+                    (order-body member-name
+                                member-order
+                                order-date
+                                order-total
+                                coordinator
+                                version)))))
 
 ;; end of html and css-related stuff
 
@@ -315,51 +297,35 @@
                 (keys member-data)))
     ))
 
-(defn generate-orderforms [spreadsheet-name order-date coordinator]
+(defn generate-orderforms [spreadsheet-name order-date coordinator version]
   "Do the work of order-form generation."
   (let [{:keys [wb order-sheet]} (get-spreadsheet-data spreadsheet-name)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
-    (doall (map #(emit-order-html % all-orders order-date coordinator) (keys member-data)))
+    (doall (map #(emit-order-html % all-orders order-date coordinator version) (keys member-data)))
     ))
 
-(defn usage
-  ([options-summary message]
-   (->> ["Albany Order-Form/Statement generator."
-         "Usage: program-name [options] spreadsheet-name order-date-id"
-         ""
-         "Options:"
-         options-summary
-         ""
-         message]
-        (string/join \newline)
-        (println)))
 
-  ([output-type]
-    (usage output-type nil)))
 
-(defn do-generate [output-type spreadsheet-name order-date coordinator summary]
-  (case output-type
-    :s
-    (do (println "writing statement files for " spreadsheet-name)
-        (generate-statements spreadsheet-name order-date))
-    :o
-    (if (nil? coordinator)
-      (usage summary "Coordinator name must be supplied")
-      (do (println "writing order forms for " spreadsheet-name)
-          (generate-orderforms spreadsheet-name order-date coordinator)))))
-
-(defn process-args [args]
-  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
-    (cond
-      (:help options) (usage summary)
-      (not= (count arguments) 2) (usage summary "Both spreadsheet-name and order-date-id must be supplied")
-      errors (usage errors)
-      :else
-      (let [[spreadsheet-name order-date]  arguments
-            {:keys [coordinator output-type version]} options]
-        (do-generate output-type spreadsheet-name order-date coordinator summary)))))
+(defn do-generate [options-and-arguments]
+  (let [{:keys [output-type
+                coordinator
+                version
+                spreadsheet-name
+                order-date
+                summary]} options-and-arguments]
+    (println "version" version)
+    (case output-type
+      :s
+      (do (println "writing statement files for " spreadsheet-name)
+          (generate-statements spreadsheet-name order-date))
+      :o
+      (if (nil? coordinator)
+        (cli/usage summary "Coordinator name must be supplied")
+        (do (println "writing" (string/upper-case (cli/version-tostring version)) "order forms for" spreadsheet-name)
+            (generate-orderforms spreadsheet-name order-date coordinator version)))
+      nil)))
 
 (defn -main
   "Generate all statements from a given Albany spreadsheet."
@@ -368,5 +334,7 @@
   (alter-var-root #'*read-eval* (constantly false))
 
   (try
-    (process-args args)
+    (-> args
+        cli/process-args
+        do-generate)
     (catch Exception e (println (str "Error: " (.getMessage e))))))
