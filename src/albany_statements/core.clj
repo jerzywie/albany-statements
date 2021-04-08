@@ -259,7 +259,7 @@
 (defn emit-order-html [member-name all-orders order-date coordinator version]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
-        file-name (str (member-display-name member-name) "-" order-date "-OrderForm.html")]
+        file-name (str (member-display-name member-name) "-" order-date "-OrderForm-" (string/upper-case (cli/version-tostring version)) ".html")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
     (spit  file-name
            (p/html5 (order-head member-name)
