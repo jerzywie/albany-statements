@@ -103,7 +103,7 @@
       [:tr
        [:th {:rowspan 2} "Code"]
        [:th {:rowspan 2} "Description"]
-       [:th {:rowspan 2} "Packsize"]
+       [:th {:rowspan 2} "Case"]
        [:th {:colspan 3} "Cost per Case"]
        [:th {:rowspan 2} "Albany units/case"]
        [:th {:colspan 2} "Amount purchased"]
@@ -201,16 +201,23 @@
    [:table.order
     [:thead
      [:tr
-      [:th "Code"]
-      [:th "Item"]
-      [:th "Case"]
-      [:th "Unit Price"]
-      [:th "Pref Q'ty (Cases)"]
-      [:th "Actual Q'ty (Cases)"]
-      [:th "Est price"]
-      [:th "Final Q'ty"]
+      [:th {:rowspan 2} "Code"]
+      [:th {:rowspan 2} "Item"]
+      [:th {:rowspan 2} "Case"]
+      [:th {:rowspan 2} "Unit Price"]
+      [:th {:rowspan 2} "Albany units/case"]
+      [:th {:colspan 2} "Pref Q'ty (Cases)"]
+      [:th {:colspan 2} "Actual Q'ty (Cases)"]
+      [:th {:rowspan 2} "Est price"]
+      [:th {:rowspan 2} "Final Q'ty"]
       ]
-]
+     [:tr
+      [:th "Albany units"]
+      [:th "Cases"]
+      [:th "Albany units"]
+      [:th "Cases"]
+      ]
+     ]
     (into [:tbody]
           (for [line member-order]
             [:tr
@@ -218,21 +225,24 @@
              [:td (u/format-description (:description line))]
              [:td (:case-size line)]
              [:td.rightjust (u/tocurrency (:unit-cost line))]
+             [:td.rightjust (:albany-units line)]
+             [:td.rightjust (:memdes line)]
              [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
+             [:td " "]
              [:td " "]
              [:td.rightjust (u/tocurrency (:memcost line))]
              [:td.rightjust (if-not (nil? (:del? line)) (str "(" (:del? line) ")") " ")]]
             ))
     [:tbody
      [:tr
-      [:td.rightjust {:colspan 6} [:b "Estimated Sub-total for above items "]]
+      [:td.rightjust {:colspan 9} [:b "Estimated Sub-total for above items "]]
       [:td.rightjust [:b (u/tocurrency order-total)]]
       [:td " "]
       ]]
 
     (into [:tbody]
           (repeat 10
-                  [:tr (repeat 8 [:td.space " "])]))
+                  [:tr (repeat 11 [:td.space " "])]))
     ]
    ])
 
@@ -315,7 +325,6 @@
                 spreadsheet-name
                 order-date
                 summary]} options-and-arguments]
-    (println "version" version)
     (case output-type
       :s
       (do (println "writing statement files for " spreadsheet-name)
