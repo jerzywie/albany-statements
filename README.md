@@ -20,6 +20,7 @@ Run the uberjar:
 
     Run the project without arguments to see this usage message:
     
+'''
 Usage: program-name [options] spreadsheet-name order-date-id
 
 Options:
@@ -29,7 +30,8 @@ Options:
   -h, --help
 
 Both spreadsheet-name and order-date-id must be supplied
-    
+'''
+
 ## License
 
 Copyright © 2013 - 2021 Jerzy
