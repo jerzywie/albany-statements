@@ -18,8 +18,7 @@ Run the uberjar:
 
 ## Options
 
-    Run the project without arguments to see this usage message:
-    
+Run the project without arguments to see this usage message:
 
     Usage: program-name [options] spreadsheet-name order-date-id
 
