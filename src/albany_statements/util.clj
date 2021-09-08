@@ -1,8 +1,10 @@
 (ns albany-statements.util
   (:use [dk.ative.docjure.spreadsheet] :reload-all)
   (:gen-class)
-  (:require [hiccup.core :as h]
-            [hiccup.page :as p]
+  (:require [hiccup
+             [core :as h]
+             [page :as p]
+             [util :as hu]]
             [garden.core]
             [garden.stylesheet]
             [clojure.string :as s]))
@@ -55,7 +57,7 @@
                       (subs rawdesc (inc end-brand)))
           brand-name (subs rawdesc 1 end-brand)]
       [:span
-       [:em brand-name]
-       [:b prod-name]
+       [:em (hu/escape-html brand-name)]
+       [:b (hu/escape-html prod-name)]
        (if org-pos org-marker)])
     [:b rawdesc]))

@@ -1,8 +1,9 @@
 (ns albany-statements.core
   (:require [dk.ative.docjure.spreadsheet :refer [select-columns load-workbook select-sheet]]
             [clojure.string :as string]
-            [hiccup.core :as h]
-            [hiccup.page :as p]
+            [hiccup
+             [core :as h]
+             [page :as p]]
             [garden.core]
             [clojure.tools.cli :refer [parse-opts]]
             [garden.stylesheet]
