@@ -20,17 +20,16 @@ Run the uberjar:
 
     Run the project without arguments to see this usage message:
     
-'''
-Usage: program-name [options] spreadsheet-name order-date-id
 
-Options:
-  -o, --output-type OUTPUT-TYPE      Type of output: order-forms | statements
-  -c, --coordinator COORDINATOR      Coordinator name (required for output-type=order-forms)
-  -v, --version VERSION          :d  Version of order-form: draft  | final
-  -h, --help
+    Usage: program-name [options] spreadsheet-name order-date-id
 
-Both spreadsheet-name and order-date-id must be supplied
-'''
+    Options:
+      -o, --output-type OUTPUT-TYPE      Type of output: order-forms | statements
+      -c, --coordinator COORDINATOR      Coordinator name (required for output-type=order-forms)
+      -v, --version VERSION          :d  Version of order-form: draft  | final
+      -h, --help
+
+    Both spreadsheet-name and order-date-id must be supplied
 
 ## License
 
