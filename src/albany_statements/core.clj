@@ -186,66 +186,72 @@
    [:style {:type "text/css"} (gen-order-css)]])
 
 (defn order-body [member-name member-order order-date order-total coordinator version]
-  [:body
-   [:h1 "Albany Food Coop     Order Form"]
-   (case version
-     :d [:h2 "Pre-meeting DRAFT"]
-     :f [:h2 "FINAL for order sorting"])
-   [:table.order
-    [:thead
-     [:tr
-      [:th [:span "Name: " [:b.bigtext (member-display-name member-name)]]]
-      [:th [:span "Order Date: " [:b.bigtext order-date]]]
-      [:th (str "Coordinator: " coordinator)]
-      ]]]
-   [:p " "]
-   [:table.order
-    [:thead
-     [:tr
-      [:th {:rowspan 2} "Code"]
-      [:th {:rowspan 2} "Item"]
-      [:th {:rowspan 2} "Case"]
-      [:th {:rowspan 2} "Unit Price"]
-      [:th {:rowspan 2} "Albany units/case"]
-      [:th {:colspan 2} "Pref Q'ty"]
-      [:th {:colspan 2} "Actual Q'ty"]
-      [:th {:rowspan 2} "Est price"]
-      [:th {:rowspan 2} "Final Q'ty"]
-      ]
-     [:tr
-      [:th "Albany units"]
-      [:th "Cases"]
-      [:th "Albany units"]
-      [:th "Cases"]
-      ]
-     ]
-    (into [:tbody]
-          (for [line member-order]
-            [:tr
-             [:td [:b (:code line)]]
-             [:td (u/format-description (:description line))]
-             [:td (:case-size line)]
-             [:td.rightjust (u/tocurrency (:unit-cost line))]
-             [:td.rightjust (:albany-units line)]
-             [:td.rightjust (:memdes line)]
-             [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
-             [:td " "]
-             [:td " "]
-             [:td.rightjust (u/tocurrency (:memcost line))]
-             [:td.rightjust (if-not (nil? (:del? line)) (str "(" (:del? line) ")") " ")]]
-            ))
-    [:tbody
-     [:tr
-      [:td.rightjust {:colspan 9} [:b "Estimated Sub-total for above items "]]
-      [:td.rightjust [:b (u/tocurrency order-total)]]
-      [:td " "]
-      ]]
+  (let [is-draft    (= version :d)
+        num-cols    (case version :d 9 :f 7)
+        blank-lines (case version :d 10 :f 4)]
+    [:body
+     [:h1 "Albany Food Coop     Order Form"]
+     (case version
+       :d [:h2 "Pre-meeting DRAFT"]
+       :f [:h2 "FINAL for order sorting"])
+     [:table.order
+      [:thead
+       [:tr
+        [:th [:span "Name: " [:b.bigtext (member-display-name member-name)]]]
+        [:th [:span "Order Date: " [:b.bigtext order-date]]]
+        [:th (str "Coordinator: " coordinator)]
+        ]]]
+     [:p " "]
+     [:table.order
+      [:thead
+       [:tr
+        [:th {:rowspan 2} "Code"]
+        [:th {:rowspan 2} "Item"]
+        [:th {:rowspan 2} "Case"]
+        [:th {:rowspan 2} "Unit Price"]
+        [:th {:rowspan 2} "Albany units/case"]
+        (when is-draft
+          [:th {:colspan 2} "Pref Q'ty"])
+        [:th {:colspan 2} (case version
+                            :d "Actual Q'ty"
+                            :f "Quantity Ordered")]
+        [:th {:rowspan 2} "Est price"]
+        [:th {:rowspan 2} (case version
+                            :d "Final Q'ty"
+                            :f "Quantity Delivered")]]
+       [:tr
+        [:th "Albany units"]
+        [:th "Cases"]
+        (when is-draft [:th "Albany units"])
+        (when is-draft [:th "Cases"])]
+       ]
+      (into [:tbody]
+            (for [line member-order]
+              [:tr
+               [:td [:b (:code line)]]
+               [:td (u/format-description (:description line))]
+               [:td (:case-size line)]
+               [:td.rightjust (u/tocurrency (:unit-cost line))]
+               [:td.rightjust (:albany-units line)]
+               [:td.rightjust (:memdes line)]
+               [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
+               (when is-draft [:td " "])
+               (when is-draft [:td " "])
+               [:td.rightjust (u/tocurrency (:memcost line))]
+               [:td.rightjust (if-not (nil? (:del? line)) (str "(" (:del? line) ")") " ")]]
+              ))
+      [:tbody
+       [:tr
+        [:td.rightjust {:colspan num-cols} [:b "Estimated Sub-total for above items "]]
+        [:td.rightjust [:b (u/tocurrency order-total)]]
+        [:td " "]
+        ]]
 
-    (into [:tbody]
-          (repeat 10
-                  [:tr (repeat 11 [:td.space " "])]))
-    ]
-   ])
+      (into [:tbody]
+            (repeat blank-lines
+                    [:tr (repeat (+ 2 num-cols) [:td.space " "])]))
+      ]
+     ]))
 
 (defn emit-statement-html [member-name
                            all-orders
