@@ -19,5 +19,5 @@
   :uberjar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.216"}}
             :exec-fn hf.depstar/uberjar
             :exec-args {:aot true
-                        :jar "albany-statements.jar"
+                        :jar "target/albany-statements.jar"
                         :main-class "albany-statements.core"}}}}
