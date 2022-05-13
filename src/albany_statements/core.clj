@@ -289,18 +289,22 @@
 
 ;; end of html and css-related stuff
 
-(defn get-spreadsheet-data [spreadsheet-name]
+(defn get-spreadsheet-data [spreadsheet-name no-save-check?]
   (let [wb (load-workbook spreadsheet-name)
-        sheet-status (ss/get-sheet-status wb)]
-    (when (not= (:state sheet-status) "Closed")
-      (throw (IllegalStateException. "The spreadsheet must be saved and closed.")))
-    {:wb wb
-     :revision (:revision sheet-status)
-     :order-sheet (select-sheet "Collated Order" wb)}))
+        sheet-status (ss/get-sheet-status wb)
+        do-save-check? (not no-save-check?)]
+    (if (and do-save-check? (not= (:state sheet-status) "Closed"))
+      (throw (IllegalStateException. "The spreadsheet must be saved and closed."))
+      (do (println "Warning - spreadsheet is in 'open' status - continuing anyway...")
+          {:wb wb
+           :revision (:revision sheet-status)
+           :order-sheet (select-sheet "Collated Order" wb)}))))
 
-(defn generate-statements [spreadsheet-name order-date]
+(defn generate-statements [spreadsheet-name order-date no-save-check?]
   "Do the work of statement generation."
-  (let [{:keys [wb order-sheet revision]} (get-spreadsheet-data spreadsheet-name)
+  (let [{:keys [wb order-sheet revision]} (get-spreadsheet-data
+                                           spreadsheet-name
+                                           no-save-check?)
         balance-sheet (bal/get-balance-sheet wb)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
@@ -314,9 +318,15 @@
                 (keys member-data)))
     ))
 
-(defn generate-orderforms [spreadsheet-name order-date coordinator version]
+(defn generate-orderforms [spreadsheet-name
+                           order-date
+                           coordinator
+                           version
+                           no-save-check?]
   "Do the work of order-form generation."
-  (let [{:keys [wb order-sheet]} (get-spreadsheet-data spreadsheet-name)
+  (let [{:keys [wb order-sheet]} (get-spreadsheet-data
+                                  spreadsheet-name
+                                  no-save-check?)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
@@ -329,18 +339,24 @@
   (let [{:keys [output-type
                 coordinator
                 version
+                no-save-check
                 spreadsheet-name
                 order-date
                 summary]} options-and-arguments]
     (case output-type
       :s
       (do (println "writing statement files for " spreadsheet-name)
-          (generate-statements spreadsheet-name order-date))
+          (generate-statements spreadsheet-name order-date no-save-check))
       :o
       (if (nil? coordinator)
         (cli/usage summary "Coordinator name must be supplied")
         (do (println "writing" (string/upper-case (cli/version-tostring version)) "order forms for" spreadsheet-name)
-            (generate-orderforms spreadsheet-name order-date coordinator version)))
+            (generate-orderforms
+             spreadsheet-name
+             order-date
+             coordinator
+             version
+             no-save-check)))
       nil)))
 
 (defn -main

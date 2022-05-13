@@ -30,6 +30,8 @@
     :parse-fn keywordise-option
     :validate (keyword-validator versions)
     :default :d]
+   ["-n" "--no-save-check" "Do not check the save status before processing."
+    :default false]
    ["-h" "--help"]])
 
 
