@@ -30,7 +30,7 @@
     :parse-fn keywordise-option
     :validate (keyword-validator versions)
     :default :d]
-   ["-n" "--no-save-check" "Do not check the save status before processing."
+   ["-n" "--no-closed-check" "Do not check the 'Closed' status before processing."
     :default false]
    ["-h" "--help"]])
 
