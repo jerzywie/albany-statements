@@ -32,6 +32,7 @@
     :default :d]
    ["-n" "--no-closed-check" "Do not check the 'Closed' status before processing."
     :default false]
+   ["-s" "--suffix SUFFIX" "A string to distinguish between different versions (also appended to file-name)."]
    ["-h" "--help"]])
 
 

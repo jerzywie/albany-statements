@@ -94,69 +94,75 @@
                       order-date
                       order-total
                       spreadsheet-name
-                      revision]
-  [:body
-   [:h1 "Albany Coop"]
-   [:h2 (str "Statement for " (member-display-name member-name) " - " order-date)]
-   [:div.order
-    [:table.order
-     [:thead
-      [:tr
-       [:th {:rowspan 2} "Code"]
-       [:th {:rowspan 2} "Description"]
-       [:th {:rowspan 2} "Case"]
-       [:th {:colspan 3} "Cost per Case"]
-       [:th {:rowspan 2} "Albany units/case"]
-       [:th {:colspan 2} "Amount purchased"]
-       [:th {:rowspan 2}"Status"]
-       [:th {:rowspan 2}"Price charged"]]
-      [:tr
-       [:th "Net"]
-       [:th "VAT"]
-       [:th "Gross"]
-       [:th "Albany units"]
-       [:th "Cases"]
-       ]]
-     (into [:tbody]
-           (for [line member-order]
-             [:tr
-              [:td (:code line)]
-              [:td (u/format-description (:description line))]
-              [:td (:case-size line)]
-              [:td.rightjust (u/tocurrency (:unit-cost line))]
-              [:td.rightjust (u/tocurrency (:vat-amount line))]
-              [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
-              [:td.rightjust (:albany-units line)]
-              [:td.rightjust (:memdes line)]
-              [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
-              [:td (:del? line)]
-              [:td.rightjust (u/tocurrency (:memcost line))]
-              ]
-             ))
-     [:tbody
-      [:tr.bold
-       [:td {:colspan 10} (str "Total for " order-date)]
-       [:td.rightjust (u/tocurrency order-total)]
+                      revision
+                      suffix]
+  (let [suffix-string (if suffix (str " (" suffix ")") "")]
+    [:body
+     [:h1 "Albany Coop"]
+     [:h2 (str "Statement for "
+               (member-display-name member-name)
+               " - "
+               order-date
+               suffix-string)]
+     [:div.order
+      [:table.order
+       [:thead
+        [:tr
+         [:th {:rowspan 2} "Code"]
+         [:th {:rowspan 2} "Description"]
+         [:th {:rowspan 2} "Case"]
+         [:th {:colspan 3} "Cost per Case"]
+         [:th {:rowspan 2} "Albany units/case"]
+         [:th {:colspan 2} "Amount purchased"]
+         [:th {:rowspan 2}"Status"]
+         [:th {:rowspan 2}"Price charged"]]
+        [:tr
+         [:th "Net"]
+         [:th "VAT"]
+         [:th "Gross"]
+         [:th "Albany units"]
+         [:th "Cases"]
+         ]]
+       (into [:tbody]
+             (for [line member-order]
+               [:tr
+                [:td (:code line)]
+                [:td (u/format-description (:description line))]
+                [:td (:case-size line)]
+                [:td.rightjust (u/tocurrency (:unit-cost line))]
+                [:td.rightjust (u/tocurrency (:vat-amount line))]
+                [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
+                [:td.rightjust (:albany-units line)]
+                [:td.rightjust (:memdes line)]
+                [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
+                [:td (:del? line)]
+                [:td.rightjust (u/tocurrency (:memcost line))]
+                ]
+               ))
+       [:tbody
+        [:tr.bold
+         [:td {:colspan 10} (str "Total for " order-date)]
+         [:td.rightjust (u/tocurrency order-total)]
+         ]
+        ]
        ]
       ]
-     ]
-    ]
-   [:div.balance
-    [:table.balance
-      [:thead
-       [ :tr
-        [:th {:colspan 2} "Balance information"]
-        ]]
-      [:tbody
-       (map #(emit-balance-html % balance) bal/bal-keys)
+     [:div.balance
+      [:table.balance
+       [:thead
+        [ :tr
+         [:th {:colspan 2} "Balance information"]
+         ]]
+       [:tbody
+        (map #(emit-balance-html % balance) bal/bal-keys)
+        ]
        ]
-     ]
-    ]
-   [:div
-    [:table.order
-     [:tbody
-      [:tr
-       [:td (format "Taken from %s. Save revision %d" spreadsheet-name (int revision))]]]]]])
+      ]
+     [:div
+      [:table.order
+       [:tbody
+        [:tr
+         [:td (format "Taken from %s. Save revision %d" spreadsheet-name (int revision))]]]]]]))
 
 
 (defn gen-order-css []
@@ -185,15 +191,16 @@
    [:meta {:charset "UTF-8"}]
    [:style {:type "text/css"} (gen-order-css)]])
 
-(defn order-body [member-name member-order order-date order-total coordinator version]
+(defn order-body [member-name member-order order-date order-total coordinator version suffix]
   (let [is-draft    (= version :d)
         num-cols    (case version :d 9 :f 7)
-        blank-lines (case version :d 10 :f 4)]
+        blank-lines (case version :d 10 :f 4)
+        suffix-string (if suffix (str " (" suffix ")") "")]
     [:body
      [:h1 "Albany Food Coop     Order Form"]
      (case version
-       :d [:h2 "Pre-meeting DRAFT"]
-       :f [:h2 "FINAL for order sorting"])
+       :d [:h2 (str "Pre-meeting DRAFT" suffix-string)]
+       :f [:h2 (str "FINAL for order sorting" suffix-string)])
      [:table.order
       [:thead
        [:tr
@@ -258,10 +265,16 @@
                            mem-balance
                            order-date
                            spreadsheet-name
-                           revision]
+                           revision
+                           suffix]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
-        file-name (str (member-display-name member-name) "-" order-date ".html")]
+        fname-suffix (if suffix (str "-" suffix) "")
+        file-name (str (member-display-name member-name)
+                       "-"
+                       order-date
+                       fname-suffix
+                       ".html")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
     (spit  file-name
            (p/html5 (statement-head member-name)
@@ -271,12 +284,20 @@
                                     order-date
                                     order-total
                                     spreadsheet-name
-                                    revision)))))
+                                    revision
+                                    suffix)))))
 
-(defn emit-order-html [member-name all-orders order-date coordinator version]
+(defn emit-order-html [member-name all-orders order-date coordinator version suffix]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
-        file-name (str (member-display-name member-name) "-" order-date "-OrderForm-" (string/upper-case (cli/version-tostring version)) ".html")]
+        fname-suffix (if suffix (str "-" suffix) "")
+        file-name (str (member-display-name member-name)
+                       "-"
+                       order-date
+                       "-OrderForm-"
+                       (string/upper-case (cli/version-tostring version))
+                       fname-suffix
+                       ".html")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
     (spit  file-name
            (p/html5 (order-head member-name)
@@ -285,7 +306,8 @@
                                 order-date
                                 order-total
                                 coordinator
-                                version)))))
+                                version
+                                suffix)))))
 
 ;; end of html and css-related stuff
 
@@ -305,7 +327,7 @@
      :revision (:revision sheet-status)
      :order-sheet (select-sheet "Collated Order" wb)}))
 
-(defn generate-statements [spreadsheet-name order-date no-closed-check?]
+(defn generate-statements [spreadsheet-name order-date no-closed-check? suffix]
   "Do the work of statement generation."
   (let [{:keys [wb order-sheet revision]} (get-spreadsheet-data
                                            spreadsheet-name
@@ -320,7 +342,8 @@
                                       (bal/get-member-balance % balance-sheet)
                                       order-date
                                       spreadsheet-name
-                                      revision)
+                                      revision
+                                      suffix)
                 (keys member-data)))
     ))
 
@@ -328,7 +351,8 @@
                            order-date
                            coordinator
                            version
-                           no-closed-check?]
+                           no-closed-check?
+                           suffix]
   "Do the work of order-form generation."
   (let [{:keys [wb order-sheet]} (get-spreadsheet-data
                                   spreadsheet-name
@@ -337,7 +361,12 @@
     (println "writing" (string/upper-case (cli/version-tostring version)) "order forms for" spreadsheet-name)
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
-    (doall (map #(emit-order-html % all-orders order-date coordinator version) (keys member-data)))
+    (doall (map #(emit-order-html %
+                                  all-orders
+                                  order-date
+                                  coordinator
+                                  version
+                                  suffix) (keys member-data)))
     ))
 
 
@@ -349,10 +378,11 @@
                 no-closed-check
                 spreadsheet-name
                 order-date
-                summary]} options-and-arguments]
+                summary
+                suffix]} options-and-arguments]
     (case output-type
       :s
-      (generate-statements spreadsheet-name order-date no-closed-check)
+      (generate-statements spreadsheet-name order-date no-closed-check suffix)
       :o
       (if (nil? coordinator)
         (cli/usage summary "Coordinator name must be supplied")
@@ -361,7 +391,8 @@
          order-date
          coordinator
          version
-         no-closed-check))
+         no-closed-check
+         suffix))
       nil)))
 
 (defn -main
