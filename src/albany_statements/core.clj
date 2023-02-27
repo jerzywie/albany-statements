@@ -191,11 +191,23 @@
    [:meta {:charset "UTF-8"}]
    [:style {:type "text/css"} (gen-order-css)]])
 
-(defn order-body [member-name member-order order-date order-total coordinator version suffix]
+(defn order-body [member-name
+                  member-order
+                  balance
+                  order-date
+                  order-total
+                  coordinator
+                  version
+                  suffix]
   (let [is-draft    (= version :d)
         num-cols    (case version :d 9 :f 7)
         blank-lines (case version :d 10 :f 4)
-        suffix-string (if suffix (str " (" suffix ")") "")]
+        suffix-string (if suffix (str " (" suffix ")") "")
+        [_ balance-brought-forward] (bal/bal-item :bf balance)
+        who-owes-who (cond
+                       (< balance-brought-forward 0) " (you owe Albany)"
+                       (> balance-brought-forward 0) " (Albany owes you)"
+                       :else "")]
     [:body
      [:h1 "Albany Food Coop     Order Form"]
      (case version
@@ -252,6 +264,16 @@
         [:td.rightjust {:colspan num-cols} [:b "Estimated Sub-total for above items "]]
         [:td.rightjust [:b (u/tocurrency order-total)]]
         [:td " "]
+        ]
+       [:tr
+        [:td.rightjust {:colspan num-cols} [:b (str "Balance from previous order" who-owes-who)]]
+        [:td.rightjust [:b (u/tocurrency balance-brought-forward)]]
+        [:td " "]
+        ]
+       [:tr
+        [:td.rightjust {:colspan num-cols} [:b "Estimated amount to pay" ]]
+        [:td.rightjust [:b (u/tocurrency (- order-total balance-brought-forward))]]
+        [:td " "]
         ]]
 
       (into [:tbody]
@@ -287,7 +309,13 @@
                                     revision
                                     suffix)))))
 
-(defn emit-order-html [member-name all-orders order-date coordinator version suffix]
+(defn emit-order-html [member-name
+                       all-orders
+                       mem-balance
+                       order-date
+                       coordinator
+                       version
+                       suffix]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         fname-suffix (if suffix (str "-" suffix) "")
@@ -303,6 +331,7 @@
            (p/html5 (order-head member-name)
                     (order-body member-name
                                 member-order
+                                mem-balance
                                 order-date
                                 order-total
                                 coordinator
@@ -357,12 +386,14 @@
   (let [{:keys [wb order-sheet]} (get-spreadsheet-data
                                   spreadsheet-name
                                   no-closed-check?)
+        balance-sheet (bal/get-balance-sheet wb)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println "writing" (string/upper-case (cli/version-tostring version)) "order forms for" spreadsheet-name)
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
     (doall (map #(emit-order-html %
                                   all-orders
+                                  (bal/get-member-balance % balance-sheet)
                                   order-date
                                   coordinator
                                   version
