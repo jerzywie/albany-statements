@@ -3,7 +3,7 @@
         dk.ative/docjure {:mvn/version "1.6.0"}
         hiccup/hiccup {:mvn/version "1.0.4"}
         org.clojure/tools.cli {:mvn/version "1.0.206"}
-        garden/garden {:mvn/version "0.1.0-beta6"}}
+        garden/garden {:mvn/version "1.3.10"}}
  :aliases
  {:run-m {:main-opts ["-m" "albany-statements.core"]}
   :run-x {:ns-default albany-statements.core
