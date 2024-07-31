@@ -8,7 +8,7 @@
              [config :as config]
              [sheet-status :as ss]
              [cli :as cli]
-             [output :as out]])
+             [output-html :as out-html]])
 
   (:gen-class))
 
@@ -64,13 +64,13 @@
     (println "writing statement files for " spreadsheet-name)
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
-    (doall (map #(out/emit-statement-html %
-                                          all-orders
-                                          (bal/get-member-balance % balance-sheet)
-                                          order-date
-                                          spreadsheet-name
-                                          revision
-                                          suffix)
+    (doall (map #(out-html/emit-statement-html %
+                                               all-orders
+                                               (bal/get-member-balance % balance-sheet)
+                                               order-date
+                                               spreadsheet-name
+                                               revision
+                                               suffix)
                 (keys member-data)))
     ))
 
@@ -89,13 +89,13 @@
     (println "writing" (string/upper-case (cli/version-tostring version)) "order forms for" spreadsheet-name)
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
-    (doall (map #(out/emit-order-html %
-                                      all-orders
-                                      (bal/get-member-balance % balance-sheet)
-                                      order-date
-                                      coordinator
-                                      version
-                                      suffix)
+    (doall (map #(out-html/emit-order-html %
+                                           all-orders
+                                           (bal/get-member-balance % balance-sheet)
+                                           order-date
+                                           coordinator
+                                           version
+                                           suffix)
                 (keys member-data)))
     ))
 
