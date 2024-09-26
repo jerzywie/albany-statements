@@ -8,7 +8,8 @@
              [config :as config]
              [sheet-status :as ss]
              [cli :as cli]
-             [output-html :as out-html]])
+             [output-html :as out-html]
+             [output-pdf :as out-pdf]])
 
   (:gen-class))
 
@@ -89,7 +90,7 @@
     (println "writing" (string/upper-case (cli/version-tostring version)) "order forms for" spreadsheet-name)
     (println (str "all-orders keys " (keys all-orders)))
     (println (apply str "all-orders counts " (map (fn [n] (str (name n) ":" (count (n all-orders)) " ")) (keys all-orders))))
-    (doall (map #(out-html/emit-order-html %
+    (doall (map #(out-pdf/emit-order-html %
                                            all-orders
                                            (bal/get-member-balance % balance-sheet)
                                            order-date

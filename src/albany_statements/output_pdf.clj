@@ -1,10 +1,11 @@
-(ns albany-statements.output-html
+(ns albany-statements.output-pdf
   (:require [clojure.string :as string]
             [hiccup
              [core :as h]
              [page :as p]]
             [garden.core]
             [garden.stylesheet]
+            [clj-htmltopdf.core :as pdf]
             [albany-statements
              [balance :as bal]
              [cli :refer [version-tostring]]
@@ -240,7 +241,7 @@
                        (< balance-brought-forward 0) " (you owe Albany)"
                        (> balance-brought-forward 0) " (Albany owes you)"
                        :else "")]
-    [:body
+    [:div
      [:h1 "Albany Food Coop     Order Form"]
      (case version
        :d [:h2 (str "Pre-meeting DRAFT" suffix-string)]
@@ -330,20 +331,22 @@
                        "-OrderForm-"
                        (string/upper-case (version-tostring version))
                        fname-suffix
-                       ".html")]
+                       ".pdf")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
-    (spit  file-name
-           (p/html5 (order-head member-name)
-                    (order-body member-name
-                                member-order
-                                mem-balance
-                                order-date
-                                order-total
-                                coordinator
-                                version
-                                suffix)))))
+    (pdf/->pdf
+     (p/html5 (order-head member-name)
+              (order-body member-name
+                          member-order
+                          mem-balance
+                          order-date
+                          order-total
+                          coordinator
+                          version
+                          suffix)) 
+     file-name
+     {:page {:margin :narrow
+             :size   :a4}
+      :styles nil})))
 
 ;; end of html and css-related stuff
-
-
 
