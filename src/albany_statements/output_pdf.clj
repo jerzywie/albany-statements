@@ -22,8 +22,12 @@
 
 (def pdf-options {:page {:margin      :narrow
                          :size        :A4
-                         :orientation :landscape}
-                  :styles nil})
+                         :orientation :landscape
+                         :margin-box  {:bottom-right {:paging ["Page " :page " of " :pages]}} }
+                  :styles {:font-size "10pt"
+                            :color     "#000"}
+                  :debug {:display-html? false
+                          :display-options? true}})
 
 (defn- fix-css-fn [s]
   "An ugly hack to get round Garden's lack of complete CSS3 function support."
@@ -136,11 +140,8 @@
         ]
        ]
       ]
-     [:div
-      [:table.order
-       [:tbody
-        [:tr
-         [:td (format "Taken from %s. Save revision %d" spreadsheet-name (int revision))]]]]]]))
+     [:div#save-revision
+      [:span (format "Taken from %s. Save revision %d" spreadsheet-name (int revision))]]]))
 
 
 (defn gen-order-css []
@@ -303,11 +304,18 @@
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         fname-suffix (if suffix (str "-" suffix) "")
-        file-name (str (member-display-name member-name)
+        person-name (member-display-name member-name)
+        footer-text  {:text (str "Statement for " person-name)}
+        file-name (str person-name
                        "-"
                        order-date
                        fname-suffix
-                       ".pdf")]
+                       ".pdf")
+        options        (update-in pdf-options
+                                  [:page :margin-box]
+                                  merge
+                                  {:bottom-left {:element "save-revision"}
+                                   :bottom-center footer-text})]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
     (pdf/->pdf
      (p/html5 (statement-head member-name)
@@ -320,7 +328,7 @@
                               revision
                               suffix))
      file-name
-     pdf-options)))
+     options)))
 
 (defn emit-order-html [member-name
                        all-orders
@@ -332,14 +340,22 @@
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         fname-suffix (if suffix (str "-" suffix) "")
-        file-name (str (member-display-name member-name)
+        person-name (member-display-name member-name)
+        display-version (string/upper-case (version-tostring version))
+        footer-text (str person-name " " display-version " order form")
+        file-name (str person-name
                        "-"
                        order-date
                        "-OrderForm-"
-                       (string/upper-case (version-tostring version))
+                       display-version
                        fname-suffix
-                       ".pdf")]
+                       ".pdf")
+        options        (update-in pdf-options
+                                  [:page :margin-box]
+                                  merge
+                                  {:bottom-left {:text footer-text}})]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
+
     (pdf/->pdf
      (p/html5 (order-head member-name)
               (order-body member-name
@@ -351,7 +367,6 @@
                           version
                           suffix)) 
      file-name
-     pdf-options)))
+     options)))
 
 ;; end of html and css-related stuff
-
