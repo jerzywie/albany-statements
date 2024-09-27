@@ -20,6 +20,11 @@
 (def light-blue "#EAF4FF")
 (def light-grey "#ECECEA")
 
+(def pdf-options {:page {:margin      :narrow
+                         :size        :A4
+                         :orientation :landscape}
+                  :styles nil})
+
 (defn- fix-css-fn [s]
   "An ugly hack to get round Garden's lack of complete CSS3 function support."
   (clojure.string/replace (clojure.string/replace s "<" "(") ">" ")"))
@@ -302,18 +307,20 @@
                        "-"
                        order-date
                        fname-suffix
-                       ".html")]
+                       ".pdf")]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
-    (spit  file-name
-           (p/html5 (statement-head member-name)
-                    (statement-body member-name
-                                    member-order
-                                    mem-balance
-                                    order-date
-                                    order-total
-                                    spreadsheet-name
-                                    revision
-                                    suffix)))))
+    (pdf/->pdf
+     (p/html5 (statement-head member-name)
+              (statement-body member-name
+                              member-order
+                              mem-balance
+                              order-date
+                              order-total
+                              spreadsheet-name
+                              revision
+                              suffix))
+     file-name
+     pdf-options)))
 
 (defn emit-order-html [member-name
                        all-orders
@@ -344,9 +351,7 @@
                           version
                           suffix)) 
      file-name
-     {:page {:margin :narrow
-             :size   :a4}
-      :styles nil})))
+     pdf-options)))
 
 ;; end of html and css-related stuff
 
