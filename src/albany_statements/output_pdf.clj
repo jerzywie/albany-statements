@@ -27,7 +27,7 @@
                   :styles {:font-size "10pt"
                             :color     "#000"}
                   :debug {:display-html? false
-                          :display-options? true}})
+                          :display-options? false}})
 
 (defn- fix-css-fn [s]
   "An ugly hack to get round Garden's lack of complete CSS3 function support."
@@ -305,7 +305,7 @@
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         fname-suffix (if suffix (str "-" suffix) "")
         person-name (member-display-name member-name)
-        footer-text  {:text (str "Statement for " person-name)}
+        footer-text (str "Statement for " person-name)
         file-name (str person-name
                        "-"
                        order-date
@@ -315,7 +315,10 @@
                                   [:page :margin-box]
                                   merge
                                   {:bottom-left {:element "save-revision"}
-                                   :bottom-center footer-text})]
+                                   :bottom-center {:text footer-text}})
+        doc-options    {:doc {:title  footer-text
+                              :author "Albany Coop"
+                              :subject order-date}}]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
     (pdf/->pdf
      (p/html5 (statement-head member-name)
@@ -328,7 +331,7 @@
                               revision
                               suffix))
      file-name
-     options)))
+     (merge options doc-options))))
 
 (defn emit-order-html [member-name
                        all-orders
@@ -353,7 +356,10 @@
         options        (update-in pdf-options
                                   [:page :margin-box]
                                   merge
-                                  {:bottom-left {:text footer-text}})]
+                                  {:bottom-left {:text footer-text}})
+        doc-options    {:doc {:title  footer-text
+                              :author "Albany Coop"
+                              :subject order-date}}]
     (println (str "File-name " file-name " Order-total " (format "%.2f" (double order-total)) ))
 
     (pdf/->pdf
@@ -367,6 +373,6 @@
                           version
                           suffix)) 
      file-name
-     options)))
+     (merge options doc-options))))
 
 ;; end of html and css-related stuff
