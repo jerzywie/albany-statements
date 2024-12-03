@@ -93,8 +93,8 @@
          [:th {:rowspan 2} "Code"]
          [:th {:rowspan 2} "Description"]
          [:th {:rowspan 2} "Case"]
-         [:th {:colspan 3} "Cost per Case"]
-         [:th {:rowspan 2} "Albany units/case"]
+         [:th {:colspan 3} "Price (single)"]
+         [:th {:rowspan 2} "Singles per case"]
          [:th {:colspan 2} "Amount purchased"]
          [:th {:rowspan 2}"Status"]
          [:th {:rowspan 2}"Price charged"]]
@@ -102,7 +102,7 @@
          [:th "Net"]
          [:th "VAT"]
          [:th "Gross"]
-         [:th "Albany units"]
+         [:th "Singles"]
          [:th "Cases"]
          ]]
        (into [:tbody]
@@ -114,9 +114,9 @@
                 [:td.rightjust (u/tocurrency (:unit-cost line))]
                 [:td.rightjust (u/tocurrency (:vat-amount line))]
                 [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
-                [:td.rightjust (:albany-units line)]
+                [:td.rightjust (:singles-per-case line)]
                 [:td.rightjust (:memdes line)]
-                [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
+                [:td.rightjust (u/essential-cases (:memdes line) (:singles-per-case line))]
                 [:td (:del? line)]
                 [:td.rightjust (u/tocurrency (:memcost line))]
                 ]
@@ -176,16 +176,17 @@
     [:th {:rowspan 2} "Code"]
     [:th {:rowspan 2} "Item"]
     [:th {:rowspan 2} "Case"]
-    [:th {:rowspan 2} "Unit Price"]
-    [:th {:rowspan 2} "Albany units/case"]
+    [:th {:rowspan 2} "Price (single)"]
+    [:th {:rowspan 2} "Unit VAT"]
+    [:th {:rowspan 2} "Singles per case"]
     [:th {:colspan 2} "Pref Q'ty"]
     [:th {:colspan 2} "Actual Q'ty"]
-    [:th {:rowspan 2} "Est price"]
+    [:th {:rowspan 2} "Est total price"]
     [:th {:rowspan 2} "Final Q'ty"]]
    [:tr
-    [:th "Albany units"]
+    [:th "Singles"]
     [:th "Cases"]
-    [:th "Albany units"]
+    [:th "Singles"]
     [:th "Cases"]]])
 
 (defn draft-order-table-row [line]
@@ -194,9 +195,10 @@
    [:td (u/format-description (:description line))]
    [:td (:case-size line)]
    [:td.rightjust (u/tocurrency (:unit-cost line))]
-   [:td.rightjust (:albany-units line)]
+   [:td.rightjust (u/tocurrency (:vat-amount line))]
+   [:td.rightjust (:singles-per-case line)]
    [:td.rightjust (:memdes line)]
-   [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
+   [:td.rightjust (u/essential-cases (:memdes line) (:singles-per-case line))]
    [:td " "]
    [:td " "]
    [:td.rightjust (u/tocurrency (:memcost line))]
@@ -209,12 +211,13 @@
     [:th {:rowspan 2} "Item"]
     [:th {:rowspan 2} "Case"]
     [:th {:rowspan 2} "Unit Price"]
-    [:th {:rowspan 2} "Est price"]
-    [:th {:rowspan 2} "Albany units/case"]
+    [:th {:rowspan 2} "Unit VAT"]
+    [:th {:rowspan 2} "Est total price"]
+    [:th {:rowspan 2} "Singles per case"]
     [:th {:colspan 2} "Quantity Ordered"]
     [:th {:rowspan 2} "Quantity Delivered"]]
    [:tr
-    [:th "Albany units"]
+    [:th "Singles"]
     [:th "Cases"]]])
 
 (defn final-order-table-row [line]
@@ -223,10 +226,11 @@
    [:td (u/format-description (:description line))]
    [:td (:case-size line)]
    [:td.rightjust (u/tocurrency (:unit-cost line))]
+   [:td.rightjust (u/tocurrency (:vat-amount line))]
    [:td.rightjust (u/tocurrency (:memcost line))]
-   [:td.rightjust (:albany-units line)]
+   [:td.rightjust (:singles-per-case line)]
    [:td.rightjust (:memdes line)]
-   [:td.rightjust (u/essential-cases (:memdes line) (:albany-units line))]
+   [:td.rightjust (u/essential-cases (:memdes line) (:singles-per-case line))]
    [:td.rightjust (if-not (nil? (:del? line)) (str "(" (:del? line) ")") " ")]])
 
 (defn order-body [member-name
@@ -238,9 +242,9 @@
                   version
                   suffix]
   (let [is-draft    (= version :d)
-        num-cols-before    (case version :d 9 :f 4)
+        num-cols-before    (case version :d 10 :f 5)
         num-cols-after (case version :d 1 :f 4)
-        blank-lines (case version :d 10 :f 4)
+        blank-lines (case version :d 5 :f 4)
         suffix-string (if suffix (str " (" suffix ")") "")
         [_ balance-brought-forward] (bal/bal-item :bf balance)
         who-owes-who (cond
