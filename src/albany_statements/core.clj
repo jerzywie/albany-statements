@@ -135,5 +135,6 @@
     (-> args
         cli/process-args
         do-generate)
+    (shutdown-agents)
     (catch Exception e (println (str "Error: " (.getMessage e) e))))
   )
