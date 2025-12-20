@@ -1,14 +1,12 @@
 (ns albany-statements.core
   (:require [dk.ative.docjure.spreadsheet :refer [select-columns load-workbook select-sheet]]
             [clojure.string :as string]
-            [clojure.tools.cli :refer [parse-opts]]
             [albany-statements
              [balance :as bal]
              [util :as u]
              [config :as config]
              [sheet-status :as ss]
              [cli :as cli]
-             [output-html :as out-html]
              [output-pdf :as out-pdf]])
 
   (:gen-class))
@@ -55,8 +53,9 @@
      :revision (:revision sheet-status)
      :order-sheet (select-sheet "Collated Order" wb)}))
 
-(defn generate-statements [spreadsheet-name order-date no-closed-check? suffix]
+(defn generate-statements
   "Do the work of statement generation."
+  [spreadsheet-name order-date no-closed-check? suffix]
   (let [{:keys [wb order-sheet revision]} (get-spreadsheet-data
                                            spreadsheet-name
                                            no-closed-check?)
@@ -75,13 +74,14 @@
                 (keys member-data)))
     ))
 
-(defn generate-orderforms [spreadsheet-name
-                           order-date
-                           coordinator
-                           version
-                           no-closed-check?
-                           suffix]
+(defn generate-orderforms
   "Do the work of order-form generation."
+  [spreadsheet-name
+   order-date
+   coordinator
+   version
+   no-closed-check?
+   suffix]
   (let [{:keys [wb order-sheet]} (get-spreadsheet-data
                                   spreadsheet-name
                                   no-closed-check?)

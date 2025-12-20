@@ -1,10 +1,5 @@
 (ns albany-statements.util
-  (:use [dk.ative.docjure.spreadsheet] :reload-all)
-  (:gen-class)
-  (:require [hiccup
-             [core :as h]
-             [page :as p]
-             [util :as hu]]
+  (:require [hiccup.util :as hu]
             [garden.core]
             [garden.stylesheet]
             [clojure.string :as s]))

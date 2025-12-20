@@ -1,5 +1,5 @@
 (ns albany-statements.sheet-status
-  (:use [dk.ative.docjure.spreadsheet] :reload-all))
+  (:require [dk.ative.docjure.spreadsheet :refer [select-sheet select-columns]]))
 
 (def status-sheet "Save Revision")
 (def cols {:A :item :B :value})

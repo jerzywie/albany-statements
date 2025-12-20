@@ -1,6 +1,5 @@
 (ns albany-statements.cli
-  (:require [dk.ative.docjure.spreadsheet :refer [select-columns load-workbook select-sheet]]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [clojure.tools.cli :refer [parse-opts]]))
 
 (def opt-sep " | ")
