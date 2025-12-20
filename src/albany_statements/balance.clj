@@ -1,12 +1,9 @@
 (ns albany-statements.balance
-  (:use [dk.ative.docjure.spreadsheet] :reload-all)
-  (:gen-class)
-  (:require [clojure.string :as s]
+  (:require [dk.ative.docjure.spreadsheet :refer [select-sheet select-columns]]
+            [clojure.string :as s]
             [albany-statements
              [util :as util]
              [config :as config]]
-            [hiccup.core :as h]
-            [hiccup.page :as p]
             [garden.core]
             [garden.stylesheet]))
 

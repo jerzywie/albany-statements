@@ -1,8 +1,6 @@
 (ns albany-statements.output-pdf
   (:require [clojure.string :as string]
-            [hiccup
-             [core :as h]
-             [page :as p]]
+            [hiccup.page :as p]
             [garden.core]
             [garden.stylesheet]
             [clj-htmltopdf.core :as pdf]
