@@ -17,7 +17,7 @@
       (keyword (apply str (cons (char (+ 65 n)) s))))))
 
 (defn tocurrency
-  "Format a number for currency display (2 digits. Parentheses when negative)"
+  "Format a number for currency display (2 digits.)"
   [v]
   (format "%.2f" (double v)))
 

@@ -17,6 +17,7 @@
   [n (-> col (* index-mult) (+ index-offset))])
 
 (def member-data (into {} (map column-index (:members config/config-data))))
+;(def member-data (into {} (map column-index {:PersonA {:pad 7 :col 1}})))
 
 (def key-column (->> (vals member-data) (apply max) (+ key-offset-from-last-member) util/to-col))
 
