@@ -27,6 +27,7 @@
     (is (= (try-get-integer 7) 7))
     (is (= (try-get-integer 3.14) 3.14))
     (is (= (try-get-integer 987.0) 987))
+    (is (= (try-get-integer 12.0) 12))
     (is (= (try-get-integer 9876.54) 9876.54))))
 
 (deftest essential-cases-test
@@ -40,3 +41,9 @@
   (testing "Formatting of the description."
     (is (= (format-description "[Brand] Product (size) ORG")
            [:span [:em "Brand"] [:b " Product (size) "] "ORG"]))))
+
+(deftest roundup-test
+  (testing "roundup behaves correctly."
+    (is (= (roundup 1) 1))
+    (is (= (roundup 12.0) 12))
+    (is (= (roundup 15.7) 16))))

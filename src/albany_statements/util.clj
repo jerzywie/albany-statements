@@ -56,3 +56,9 @@
        [:b (hu/escape-html prod-name)]
        (if org-pos org-marker)])
     [:b rawdesc]))
+
+(defn roundup
+  "Round up to the next higher integer. Only for v>0."
+  [v]
+  (let [maybe-int-v (try-get-integer v)]
+    (if (int? maybe-int-v) maybe-int-v (+ 1 (int v)))))

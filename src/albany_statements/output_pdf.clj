@@ -173,14 +173,12 @@
    [:tr
     [:th {:rowspan 2} "Code"]
     [:th {:rowspan 2} "Item"]
-    [:th {:rowspan 2} "Case"]
-    [:th {:rowspan 2} "Price (single)"]
-    [:th {:rowspan 2} "Unit VAT"]
     [:th {:rowspan 2} "Singles per case"]
+    [:th {:rowspan 2} "Price per single unit"]
+    [:th {:rowspan 2} "Unit VAT"]
     [:th {:colspan 2} "Pref Q'ty"]
-    [:th {:colspan 2} "Actual Q'ty"]
     [:th {:rowspan 2} "Est total price"]
-    [:th {:rowspan 2} "Final Q'ty"]]
+    [:th {:colspan 2} "Final Q'ty"]]
    [:tr
     [:th "Singles"]
     [:th "Cases"]
@@ -194,12 +192,10 @@
    [:td (:case-size line)]
    [:td.rightjust (u/tocurrency (:unit-cost line))]
    [:td.rightjust (u/tocurrency (:vat-amount line))]
-   [:td.rightjust (:singles-per-case line)]
    [:td.rightjust (:memdes line)]
-   [:td.rightjust (u/essential-cases (:memdes line) (:singles-per-case line))]
-   [:td " "]
-   [:td " "]
+   [:td.rightjust (u/essential-cases (:memdes line) (:case-size line))]
    [:td.rightjust (u/tocurrency (:memcost line))]
+   [:td " "]
    [:td " "]])
 
 (defn final-order-table-head []
@@ -207,11 +203,10 @@
    [:tr
     [:th {:rowspan 2} "Code"]
     [:th {:rowspan 2} "Item"]
-    [:th {:rowspan 2} "Case"]
-    [:th {:rowspan 2} "Unit Price"]
+    [:th {:rowspan 2} "Singles per case"]
+    [:th {:rowspan 2} "Price per single unit"]
     [:th {:rowspan 2} "Unit VAT"]
     [:th {:rowspan 2} "Est total price"]
-    [:th {:rowspan 2} "Singles per case"]
     [:th {:colspan 2} "Quantity Ordered"]
     [:th {:rowspan 2} "Quantity Delivered"]]
    [:tr
@@ -226,9 +221,8 @@
    [:td.rightjust (u/tocurrency (:unit-cost line))]
    [:td.rightjust (u/tocurrency (:vat-amount line))]
    [:td.rightjust (u/tocurrency (:memcost line))]
-   [:td.rightjust (:singles-per-case line)]
    [:td.rightjust (:memdes line)]
-   [:td.rightjust (u/essential-cases (:memdes line) (:singles-per-case line))]
+   [:td.rightjust (u/essential-cases (:memdes line) (:case-size line))]
    [:td.rightjust (if-not (nil? (:del? line)) (str "(" (:del? line) ")") " ")]])
 
 (defn order-body [member-name
@@ -240,8 +234,9 @@
                   version
                   suffix]
   (let [is-draft    (= version :d)
-        num-cols-before    (case version :d 10 :f 5)
-        num-cols-after (case version :d 1 :f 4)
+        num-cols-before    (case version :d 7 :f 4)
+        num-cols-after (case version :d 2 :f 4)
+        num-cols-all (+ 1 num-cols-before num-cols-after)
         blank-lines (case version :d 5 :f 4)
         suffix-string (if suffix (str " (" suffix ")") "")
         [_ balance-brought-forward] (bal/bal-item :bf balance)
@@ -277,22 +272,23 @@
         [:td.rightjust [:b (u/tocurrency order-total)]]
         [:td {:colspan num-cols-after} " "]
         ]
-       (when is-draft 
-         [:tr
-          [:td.rightjust {:colspan num-cols-before} [:b (str "Balance from previous order" who-owes-who)]]
-          [:td.rightjust [:b (u/tocurrency balance-brought-forward)]]
-          [:td {:colspan num-cols-after} " "]
-          ])
-       (when is-draft
-         [:tr
-          [:td.rightjust {:colspan num-cols-before} [:b "Estimated amount to pay" ]]
-          [:td.rightjust [:b (u/tocurrency (- order-total balance-brought-forward))]]
-          [:td {:colspan num-cols-after} " "]
-          ])]
-
-      (into [:tbody]
-            (repeat blank-lines
-                    [:tr (repeat (+ 1 num-cols-before num-cols-after) [:td.space " "])]))
+       [:tr
+        [:td.rightjust {:colspan num-cols-before} [:b (str "Balance from previous order" who-owes-who)]]
+        [:td.rightjust [:b (u/tocurrency balance-brought-forward)]]
+        [:td {:colspan num-cols-after} " "]
+        ]
+       [:tr
+        [:td.rightjust {:colspan num-cols-before}
+         [:b "Estimated amount to pay (rounded up to whole pounds)" ]]
+        [:td.rightjust [:b (-> (- order-total balance-brought-forward)
+                               u/roundup
+                               u/tocurrency )]]
+        [:td {:colspan num-cols-after} " "]
+        ]]
+      (when is-draft
+        (into [:tbody]
+              (repeat blank-lines
+                      [:tr (repeat num-cols-all [:td.space " "])])))
       ]
      ]))
 
