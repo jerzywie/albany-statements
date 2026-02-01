@@ -7,7 +7,8 @@
              [config :as config]
              [sheet-status :as ss]
              [cli :as cli]
-             [output-pdf :as out-pdf]])
+             [output-pdf :as out-pdf]
+             [status-key :as sk]])
 
   (:gen-class))
 
@@ -60,6 +61,7 @@
                                            spreadsheet-name
                                            no-closed-check?)
         balance-sheet (bal/get-balance-sheet wb)
+        status-key-info (sk/get-status-codes-and-text wb)
         all-orders (reduce conj (map #(get-member-order % order-sheet) member-data))]
     (println "writing statement files for " spreadsheet-name)
     (println (str "all-orders keys " (keys all-orders)))
@@ -70,7 +72,8 @@
                                                order-date
                                                spreadsheet-name
                                                revision
-                                               suffix)
+                                               suffix
+                                               status-key-info)
                 (keys member-data)))
     ))
 

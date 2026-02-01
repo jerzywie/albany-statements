@@ -63,6 +63,14 @@
        [:td.rightjust (u/tocurrency v)]
        ])))
 
+(defn emit-status-key-html
+  [status-key-info]
+  (for [{:keys [code description] :as item} status-key-info]
+    (when-not (nil? item)
+      [:tr
+       [:td code]
+       [:td description]])))
+
 (defn statement-head [member-name]
   [:head
    [:title (str "Statement for " (member-display-name member-name))]
@@ -76,7 +84,8 @@
                       order-total
                       spreadsheet-name
                       revision
-                      suffix]
+                      suffix
+                      status-key-info]
   (let [suffix-string (if suffix (str " (" suffix ")") "")]
     [:body
      [:h1 "Albany Coop Statement"]
@@ -133,6 +142,16 @@
          ]]
        [:tbody
         (map #(emit-balance-html % balance) bal/bal-keys)
+        ]
+       ]
+      ]
+     [:div.status-key
+      [:table.status-key
+       [:thead
+        [:tr
+         [:th {:colspan 2} "Status abbreviations"]]]
+       [:tbody
+        (emit-status-key-html status-key-info)
         ]
        ]
       ]
@@ -314,7 +333,8 @@
                            order-date
                            spreadsheet-name
                            revision
-                           suffix]
+                           suffix
+                           status-key-info]
   (let [member-order (member-name all-orders)
         order-total (reduce #(+ %1 (:memcost %2)) 0 member-order)
         fname-suffix (if suffix (str "-" suffix) "")
@@ -343,7 +363,8 @@
                               order-total
                               spreadsheet-name
                               revision
-                              suffix))
+                              suffix
+                              status-key-info))
      file-name
      (merge options doc-options))))
 
