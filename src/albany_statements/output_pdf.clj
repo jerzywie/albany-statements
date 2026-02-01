@@ -39,7 +39,7 @@
      {:font-size "12px"}
      {:font-weight "normal"}
      ]
-    [:.order :.balance {:border-collapse "collapse"}
+    [:.order :.balance :.status-key {:border-collapse "collapse"}
      [:td :th {:border "#999 1px solid"} ]
      [:td {:padding "4px"} ]
      [:th {:background  dark-blue} {:padding "8px"}]
@@ -49,6 +49,7 @@
      ]
     [:table.order {:width "100%"}]
     [:div.balance {:float "right"} {:margin-top "8px" :margin-bottom "8px"}]
+    [:div.status-key {:float "left"} {:margin-top "8px" :margin-bottom "8px"}]
     [:.rightjust {:text-align "right"}]
     [:.bold {:font-weight "bold"}]
     )))
@@ -78,9 +79,8 @@
                       suffix]
   (let [suffix-string (if suffix (str " (" suffix ")") "")]
     [:body
-     [:h1 "Albany Coop"]
-     [:h2 (str "Statement for "
-               (member-display-name member-name)
+     [:h1 "Albany Coop Statement"]
+     [:h2 (str (member-display-name member-name)
                " - "
                order-date
                suffix-string)]
@@ -90,12 +90,11 @@
         [:tr
          [:th {:rowspan 2} "Code"]
          [:th {:rowspan 2} "Description"]
-         [:th {:rowspan 2} "Case"]
-         [:th {:colspan 3} "Price (single)"]
          [:th {:rowspan 2} "Singles per case"]
+         [:th {:colspan 3} "Price per single unit"]
          [:th {:colspan 2} "Amount purchased"]
-         [:th {:rowspan 2}"Status"]
-         [:th {:rowspan 2}"Price charged"]]
+         [:th {:rowspan 2} "Status"]
+         [:th {:rowspan 2} "Price charged"]]
         [:tr
          [:th "Net"]
          [:th "VAT"]
@@ -108,20 +107,19 @@
                [:tr
                 [:td (:code line)]
                 [:td (u/format-description (:description line))]
-                [:td (:case-size line)]
+                [:td.rightjust (int (:case-size line))]
                 [:td.rightjust (u/tocurrency (:unit-cost line))]
                 [:td.rightjust (u/tocurrency (:vat-amount line))]
                 [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
-                [:td.rightjust (:singles-per-case line)]
-                [:td.rightjust (:memdes line)]
-                [:td.rightjust (u/essential-cases (:memdes line) (:singles-per-case line))]
+                [:td.rightjust (int (:memdes line))]
+                [:td.rightjust (u/essential-cases (:memdes line) (:case-size line))]
                 [:td (:del? line)]
                 [:td.rightjust (u/tocurrency (:memcost line))]
                 ]
                ))
        [:tbody
         [:tr.bold
-         [:td {:colspan 10} (str "Total for " order-date)]
+         [:td {:colspan 9} (str "Total for " order-date)]
          [:td.rightjust (u/tocurrency order-total)]
          ]
         ]
@@ -150,6 +148,13 @@
      {:font-size "12px"}
      {:font-weight "normal"}
      ]
+    [:.heading {:width "100%"}
+               {:border-collapse "collapse"}
+               {:border "#999 1px solid"}
+     [:td :th {:border "none"}]
+     [:td {:padding "4px"} ]
+     [:th {:background  dark-blue} {:padding "2px"}]
+     ]
     [:.order {:width "100%"} {:border-collapse "collapse"}
      [:td :th {:border "#999 1px solid"} ]
      [:td {:padding "4px"} ]
@@ -157,7 +162,9 @@
      ]
     [:.rightjust {:text-align "right"}]
     [:td.space {:padding-top "30px"}]
+    [:.smalltext {:font-size "0.7em"}]
     [:.bigtext {:font-size "1.5em"}]
+    [:.hugetext {:font-size "2.5em"}]
     (garden.stylesheet/at-media {:print true}
                                 [:thead {:display "table-header-group"}])
     )))
@@ -172,14 +179,16 @@
   [:thead
    [:tr
     [:th {:rowspan 2} "Code"]
-    [:th {:rowspan 2} "Item"]
+    [:th {:rowspan 2} "Description"]
     [:th {:rowspan 2} "Singles per case"]
-    [:th {:rowspan 2} "Price per single unit"]
-    [:th {:rowspan 2} "Unit VAT"]
+    [:th {:colspan 3} "Price per single unit"]
     [:th {:colspan 2} "Pref Q'ty"]
     [:th {:rowspan 2} "Est total price"]
     [:th {:colspan 2} "Final Q'ty"]]
    [:tr
+    [:th "Net"]
+    [:th "VAT"]
+    [:th "Gross"]
     [:th "Singles"]
     [:th "Cases"]
     [:th "Singles"]
@@ -189,10 +198,11 @@
   [:tr
    [:td [:b (:code line)]]
    [:td (u/format-description (:description line))]
-   [:td (:case-size line)]
+   [:td.rightjust (int (:case-size line))]
    [:td.rightjust (u/tocurrency (:unit-cost line))]
    [:td.rightjust (u/tocurrency (:vat-amount line))]
-   [:td.rightjust (:memdes line)]
+   [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
+   [:td.rightjust (int (:memdes line))]
    [:td.rightjust (u/essential-cases (:memdes line) (:case-size line))]
    [:td.rightjust (u/tocurrency (:memcost line))]
    [:td " "]
@@ -201,15 +211,17 @@
 (defn final-order-table-head []
   [:thead
    [:tr
-    [:th {:rowspan 2} "Code"]
-    [:th {:rowspan 2} "Item"]
+   [:th {:rowspan 2} "Code"]
+    [:th {:rowspan 2} "Description"]
     [:th {:rowspan 2} "Singles per case"]
-    [:th {:rowspan 2} "Price per single unit"]
-    [:th {:rowspan 2} "Unit VAT"]
+    [:th {:colspan 3} "Price per single unit"]
     [:th {:rowspan 2} "Est total price"]
     [:th {:colspan 2} "Quantity Ordered"]
     [:th {:rowspan 2} "Quantity Delivered"]]
    [:tr
+    [:th "Net"]
+    [:th "VAT"]
+    [:th "Gross"]
     [:th "Singles"]
     [:th "Cases"]]])
 
@@ -217,11 +229,12 @@
   [:tr
    [:td [:b (:code line)]]
    [:td (u/format-description (:description line))]
-   [:td (:case-size line)]
+   [:td.rightjust (int (:case-size line))]
    [:td.rightjust (u/tocurrency (:unit-cost line))]
    [:td.rightjust (u/tocurrency (:vat-amount line))]
+   [:td.rightjust (u/tocurrency (+ (:unit-cost line) (:vat-amount line)))]
    [:td.rightjust (u/tocurrency (:memcost line))]
-   [:td.rightjust (:memdes line)]
+   [:td.rightjust (int (:memdes line))]
    [:td.rightjust (u/essential-cases (:memdes line) (:case-size line))]
    [:td.rightjust (if-not (nil? (:del? line)) (str "(" (:del? line) ")") " ")]])
 
@@ -234,8 +247,8 @@
                   version
                   suffix]
   (let [is-draft    (= version :d)
-        num-cols-before    (case version :d 7 :f 4)
-        num-cols-after (case version :d 2 :f 4)
+        num-cols-before    (case version :d 8 :f 6)
+        num-cols-after (case version :d 2 :f 3)
         num-cols-all (+ 1 num-cols-before num-cols-after)
         blank-lines (case version :d 5 :f 4)
         suffix-string (if suffix (str " (" suffix ")") "")
@@ -249,13 +262,16 @@
      (case version
        :d [:h2 (str "Pre-meeting DRAFT" suffix-string)]
        :f [:h2 (str "FINAL for order sorting" suffix-string)])
-     [:table.order
+     [:table.heading
       [:thead
        [:tr
-        [:th [:span "Name: " [:b.bigtext (member-display-name member-name)]]]
-        [:th [:span "Order Date: " [:b.bigtext order-date]]]
-        [:th (str "Coordinator: " coordinator)]
-        ]]]
+        [:th {:rowspan 2} [:b.hugetext (member-display-name member-name)]]
+        [:th.smalltext "Order Date" ]
+        [:th.smalltext "Coordinator"]
+        ]
+       [:tr
+        [:th [:b.bigtext order-date]]
+        [:th.bigtext coordinator]]]]
      [:p " "]
      [:table.order
       (case version
